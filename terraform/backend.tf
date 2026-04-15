@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket                      = "terraform-state"
-    key                         = "kubernetes-cluster/terraform.tfstate"
+    key                         = "postgres-cluster/terraform.tfstate"
     skip_credentials_validation = true
     skip_region_validation      = true
     skip_metadata_api_check     = true

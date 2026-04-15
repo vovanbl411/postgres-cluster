@@ -14,6 +14,7 @@ jobs:
       TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       R2_ENDPOINT: ${{ secrets.AWS_ENDPOINT_URL_S3 }}
+      TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
 
     steps:
       - uses: actions/checkout@v4
