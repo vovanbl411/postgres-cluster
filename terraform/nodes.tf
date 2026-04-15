@@ -1,6 +1,6 @@
 # Ресурс SSH-ключа
-resource "twc_ssh_key" "main" {
-  name = "vladimir-key"
+resource "twc_ssh_key" "ansible_key" {
+  name = "ansible-key"
   body = var.ssh_public_key
 }
 
@@ -38,11 +38,11 @@ resource "twc_server" "pg_nodes" {
   project_id = twc_project.postgres_cluster.id
 
   # Используем ID созданного выше ресурса
-  ssh_keys_ids = [twc_ssh_key.main.id]
+  ssh_keys_ids = [twc_ssh_key.ansible_key.id]
 
   configuration {
     configurator_id = data.twc_configurator.base_conf.id
-    cpu             = 2
+    cpu             = 1
     ram             = 2048
     disk            = 20480
   }

@@ -1,5 +1,5 @@
 output "node_public_ips" {
-  value       = [for s in twc_server.pg_nodes : s.main_ipv4]
+  value       = twc_server.pg_nodes[*].main_ipv4
   description = "Public IPs for Ansible SSH connection"
 }
 
