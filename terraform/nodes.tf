@@ -43,11 +43,17 @@ resource "twc_server" "pg_nodes" {
   configuration {
     configurator_id = data.twc_configurator.base_conf.id
     cpu             = 1
-    ram             = 2048
-    disk            = 20480
+    ram             = 1024
+    disk            = 15360
   }
 
   local_network {
     id = twc_vpc.cluster_net.id
   }
+}
+
+resource "twc_server_ip" "pg_ips" {
+  count            = var.instance_count
+  source_server_id = twc_server.pg_nodes[count.index].id
+  type             = "ipv4"
 }
