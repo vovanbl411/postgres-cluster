@@ -10,5 +10,10 @@ terraform {
     skip_s3_checksum            = true
     # region                      = "auto"
     # endpoint будут заданы в workflow
+
+    endpoints = {
+    s3 = ""
+  }
+
   }
 }

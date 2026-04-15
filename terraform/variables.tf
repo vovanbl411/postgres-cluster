@@ -12,7 +12,7 @@ variable "cloudflare_api_token" {
   sensitive   = true
 }
 
-variable "region" {
+variable "location" {
   description = "Location for resources"
   type        = string
   default     = "ru-1"

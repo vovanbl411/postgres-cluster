@@ -36,7 +36,7 @@ jobs:
           terraform init \
             -backend-config="bucket=${{ vars.R2_BUCKET || 'terraform-state' }}" \
             -backend-config="key=kubernetes-cluster/terraform.tfstate" \
-            -backend-config="endpoint=${{ env.R2_ENDPOINT }}" \
+            -backend-config="endpoints={s3=\"${{ env.R2_ENDPOINT }}\"}" \
             -backend-config="access_key=${{ env.AWS_ACCESS_KEY_ID }}" \
             -backend-config="secret_key=${{ env.AWS_SECRET_ACCESS_KEY }}" \
             -backend-config="skip_credentials_validation=true" \
