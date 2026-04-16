@@ -1,9 +1,9 @@
 output "node_public_ips" {
-  value       = twc_server_ip.pg_ips[*].ip
-  description = "Public IPs for Ansible SSH connection"
+  value = module.postgres_nodes.public_ips
+  description = "Public IPs from the twc_node module"
 }
 
 output "node_private_ips" {
-  value       = [for s in twc_server.pg_nodes : s.local_network[0].ip]
-  description = "Private IPs for VPC internal communication"
+  value = module.postgres_nodes.private_ips
+  description = "Private IPs from the twc_node module"
 }
