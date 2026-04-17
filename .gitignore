@@ -1,3 +1,28 @@
 .history
 .kilo
 docs.md
+
+# Terraform files
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.backup
+**/*.tfstate.*.backup
+**/terraform.tfvars
+**/terraform.tfvars.json
+**/.terraform.lock.hcl
+
+# Ansible files
+**/*.retry
+**/inventory.ini
+**/inventory.yml
+**/inventory.yaml
+
+# General
+.DS_Store
+*.log
+*.swp
+*.swo
+*~
+.env
+.vscode/
+.idea/

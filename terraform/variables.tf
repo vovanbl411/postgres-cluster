@@ -26,3 +26,18 @@ variable "ssh_public_key" {
   description = "Публичный ключ для доступа к нодам"
   type = string
 }
+
+variable "cloudflare_account_id" {
+  description = "ID cloudflare acc"
+  type        = string
+}
+
+variable "cloudflare_zone_id" {
+  description = "ID zone"
+  type        = string
+}
+
+variable "tunnel_domain" {
+  description = "Domen for access"
+  type        = string
+}

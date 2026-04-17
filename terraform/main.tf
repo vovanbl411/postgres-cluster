@@ -8,6 +8,10 @@ data "twc_configurator" "base_conf" {
   location = var.location
 }
 
+data "twc_image" "connector_base" {
+  name = "debian-13-cloudflared-base"
+}
+
 # Общие ресурсы (Сеть, Проект, SSH Ключ)
 resource "twc_project" "postgres_cluster" {
   name        = "Postgres-HA-Project"
@@ -40,26 +44,60 @@ module "postgres_nodes" {
   vpc_id          = twc_vpc.cluster_net.id
 }
 
-resource "twc_server" "bastion" {
-  name         = "bastion-gateway"
-  os_id        = data.twc_os.debian.id
-  project_id   = twc_project.postgres_cluster.id
-  ssh_keys_ids = [twc_ssh_key.ansible_key.id]
-
-  configuration {
-    configurator_id = data.twc_configurator.base_conf.id
-    cpu             = 1
-    ram             = 1024
-    disk            = 15360
+  resource "random_password" "tunnel_secret" {
+    length = 64
   }
 
-  local_network {
-    id = twc_vpc.cluster_net.id
-    ip = "192.168.10.10"
+  resource "cloudflare_zero_trust_tunnel_cloudflared" "ssh_tunnel" {
+    account_id = var.cloudflare_account_id
+    name       = "timeweb_bastion_tunnel"
+    secret     = base64encode(random_password.tunnel_secret.result)
   }
-}
 
-  resource "twc_server_ip" "bastion_ip" {
-    source_server_id = twc_server.bastion.id
+  resource "cloudflare_zero_trust_tunnel_cloudflared_config" "ssh_config" {
+    account_id = var.cloudflare_account_id
+    tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.ssh_tunnel.id
+
+    config {
+      ingress_rule {
+        hostname = var.tunnel_domain
+        service  = "ssh://localhost:22"
+      }
+
+      ingress_rule {
+        service  = "http_status:404"
+      }
+    }
+  }
+
+  resource "cloudflare_record" "tunnel_dns" {
+    zone_id = var.cloudflare_zone_id
+    name    = split(".", var.tunnel_domain)[0]
+    value   = "${cloudflare_zero_trust_tunnel_cloudflared.ssh_tunnel.id}.cfargotunnel.com"
+    type    = "CNAME"
+    proxied = true
+  }
+
+  resource "twc_server" "connector" {
+    name = "cloudflare-connector"
+    image_id = data.twc_image.connector_base.id
+    project_id = twc_project.postgres_cluster.id
+    ssh_keys_ids = [twc_ssh_key.ansible_key.id]
+
+    configuration {
+      configurator_id = data.twc_configurator.base_conf.id
+      cpu = 1
+      ram = 1024
+      disk = 15360
+    }
+
+    local_network {
+      id = twc_vpc.cluster_net.id
+      ip = "192.168.10.10"
+    }
+  }
+
+  resource "twc_server_ip" "connector_ip" {
+    source_server_id = twc_server.connector.id
     type             = "ipv4"
   }
