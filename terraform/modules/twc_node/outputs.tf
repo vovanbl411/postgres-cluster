@@ -3,5 +3,5 @@ output "public_ips" {
 }
 
 output "private_ips" {
-  value = [for s in twc_server.node : s.local_network[0].ip]
+  value = [for s in twc_server.node : try([for n in s.networks : n.ips[0].ip if n.type == "local"][0],"IP не найден")]
 }

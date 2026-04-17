@@ -8,7 +8,8 @@ terraform {
       version = "~> 4.40.0"
     }
   }
-  required_version = ">= 0.13"
+  # Version terraform
+  required_version = ">= 1.5"
 }
 
 provider "twc" {

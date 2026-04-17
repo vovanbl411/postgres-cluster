@@ -20,22 +20,20 @@
 
 ### Этап 1: Инфраструктурный слой (Terraform)
 
- 1. Настройка Backend: Конфигурация terraform { backend "s3" { ... } } для Cloudflare R2.
+1. Настройка Backend: Конфигурация terraform { backend "s3" { ... } } для Cloudflare R2.
  2. Ресурсы Timeweb:
-
-   * 3 виртуальных сервера (рекомендуемый конфиг: от 2 ГБ RAM для стабильной работы Consul + PG).
-   * Локальная сеть (VPC) для внутреннего трафика (репликация, Consul, опросы Patroni).
-   * Настройка SSH-ключей для доступа Ansible.
+    * 3 виртуальных сервера (рекомендуемый конфиг: от 2 ГБ RAM для стабильной работы Consul + PG).
+    * Локальная сеть (VPC) для внутреннего трафика (репликация, Consul, опросы Patroni).
+    * Настройка SSH-ключей для доступа Ansible.
  3. Outputs: Вывод IP-адресов серверов для динамического формирования инвентаря Ansible.
 
  ### Этап 2: Автоматизация (GitHub Actions)
 
- 1. Secrets: Добавление TWC_TOKEN, R2_ACCESS_KEY, R2_SECRET_KEY, SSH_PRIVATE_KEY в секреты репозитория.
- 2. Pipeline:
-
-   * terraform plan при Pull Request.
-   * terraform apply при пуше в main.
-   * Запуск ansible-playbook после успешного развертывания инфраструктуры.
+1. Secrets: Добавление TWC_TOKEN, R2_ACCESS_KEY, R2_SECRET_KEY, SSH_PRIVATE_KEY в секреты репозитория.
+2. Pipeline:
+    * terraform plan при Pull Request.
+    * terraform apply при пуше в main.
+    * Запуск ansible-playbook после успешного развертывания инфраструктуры.
 
 ### Этап 3: Конфигурация системы (Ansible)
 
@@ -62,8 +60,9 @@
  * Deployment Test: Все роли отработали без ошибок, patronictl list показывает кластер из 3 нод (1 Leader, 2 Replicas).
  * Consul Check: consul members показывает 3 живых ноды.
  * VIP Check: Пинг VIP-адреса проходит. Подключение psql -h <VIP> ведет на текущего лидера.
- * Failover Test: * kill -9 процесса Postgres на мастере -> автоматический выбор нового лидера за 10-15 секунд.
-   * Выключение всей VM мастера через панель Timeweb -> VIP переезжает, HAProxy переключает трафик.
+ * Failover Test:
+    * kill -9 процесса Postgres на мастере -> автоматический выбор нового лидера за 10-15 секунд.
+    * Выключение всей VM мастера через панель Timeweb -> VIP переезжает, HAProxy переключает трафик.
  * Switchover Test: Плановая передача роли лидера через patronictl switchover без потери данных.
 
 ## 5. Дополнительные идеи (на будущее)

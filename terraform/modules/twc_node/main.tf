@@ -8,9 +8,9 @@ resource "twc_server" "node" {
 
   configuration {
     configurator_id = var.configurator_id
-    cpu             = 1
-    ram             = 1024
-    disk            = 15360
+    cpu             = var.cpu
+    ram             = var.ram
+    disk            = var.disk
   }
 
   local_network {

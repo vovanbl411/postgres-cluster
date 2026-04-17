@@ -33,3 +33,21 @@ variable "vpc_id" {
   description = "ID приватной сети"
   type        = string
 }
+
+variable "cpu" {
+  description = "Количество ядер CPU"
+  type        = number
+  default = 1 
+}
+
+variable "ram" {
+  description = "Размер Количетсов ram"
+  type        = number
+  default = 1024  
+}
+
+variable "disk" {
+  description = "Размер диска"
+  type        = number
+  default = 15360  
+}
