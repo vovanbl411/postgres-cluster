@@ -18,8 +18,3 @@ resource "twc_server" "node" {
   }
 }
 
-resource "twc_server_ip" "ip" {
-  count            = var.node_count
-  source_server_id = twc_server.node[count.index].id
-  type             = "ipv4"
-}

@@ -1,5 +1,5 @@
 output "public_ips" {
-  value = twc_server_ip.ip[*].ip
+  value = []
 }
 
 output "private_ips" {

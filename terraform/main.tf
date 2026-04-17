@@ -39,3 +39,27 @@ module "postgres_nodes" {
   ssh_key_id      = twc_ssh_key.ansible_key.id
   vpc_id          = twc_vpc.cluster_net.id
 }
+
+resource "twc_server" "bastion" {
+  name         = "bastion-gateway"
+  os_id        = data.twc_os.debian.id
+  project_id   = twc_project.postgres_cluster.id
+  ssh_keys_ids = [twc_ssh_key.ansible_key.id]
+
+  configuration {
+    configurator_id = data.twc_configurator.base_conf.id
+    cpu             = 1
+    ram             = 1024
+    disk            = 15360
+  }
+
+  local_network {
+    id = twc_vpc.cluster_net.id
+    ip = "192.168.10.10"
+  }
+}
+
+  resource "twc_server_ip" "bastion_ip" {
+    source_server_id = twc_server.bastion.id
+    type             = "ipv4"
+  }
