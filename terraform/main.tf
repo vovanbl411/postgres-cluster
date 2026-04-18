@@ -8,9 +8,9 @@ data "twc_configurator" "base_conf" {
   location = var.location
 }
 
-data "twc_image" "connector_base" {
-  name = "debian-13-cloudflared-base"
-}
+data "twc_image" "connector" {
+  name = "debian-13-cloudflared"
+} 
 
 # Общие ресурсы (Сеть, Проект, SSH Ключ)
 resource "twc_project" "postgres_cluster" {
@@ -71,16 +71,16 @@ module "postgres_nodes" {
   }
 
   resource "cloudflare_record" "tunnel_dns" {
-    zone_id = var.cloudflare_zone_id
+    zone_id   = var.cloudflare_zone_id
     name    = split(".", var.tunnel_domain)[0]
-    value   = "${cloudflare_zero_trust_tunnel_cloudflared.ssh_tunnel.id}.cfargotunnel.com"
+    content   = "${cloudflare_zero_trust_tunnel_cloudflared.ssh_tunnel.id}.cfargotunnel.com"
     type    = "CNAME"
     proxied = true
   }
 
   resource "twc_server" "connector" {
     name = "cloudflare-connector"
-    image_id = data.twc_image.connector_base.id
+    image_id = data.twc_image.connector.id
     project_id = twc_project.postgres_cluster.id
     ssh_keys_ids = [twc_ssh_key.ansible_key.id]
 
@@ -93,8 +93,11 @@ module "postgres_nodes" {
 
     local_network {
       id = twc_vpc.cluster_net.id
-      ip = "192.168.10.10"
     }
+
+    cloud_init = templatefile("${path.module}/setup.sh.tpl", {
+      tunnel_token = cloudflare_zero_trust_tunnel_cloudflared.ssh_tunnel.tunnel_token
+    })
   }
 
   resource "twc_server_ip" "connector_ip" {
