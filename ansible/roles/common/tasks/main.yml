@@ -1,0 +1,45 @@
+---
+- name: Update apt cache and upgrade packages
+  apt:
+    update_cache: yes
+    upgrade: dist
+    cache_valid_time: 3600
+
+- name: Install essential packages
+  apt:
+    name:
+      - chrony
+      - curl
+      - jq
+      - gnupg2
+      - ca-certificates
+      - apt-transport-https
+      - acl # Требуется для корректной работы Ansible с непривилегированными пользователями
+      - htop
+    state: present
+
+- name: Ensure Chrony is enabled and running
+  systemd:
+    name: chrony
+    state: started
+    enabled: yes
+
+- name: Configure sysctl for HAProxy, Keepalived and PostgreSQL
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/99-postgres-ha.conf
+    state: present
+    reload: yes
+  loop:
+    # Критически важно для Keepalived + HAProxy:
+    # Позволяет HAProxy биндиться к Virtual IP (VIP) даже если он сейчас на другой ноде
+    - { name: 'net.ipv4.ip_nonlocal_bind', value: '1' }
+    
+    # Рекомендации для базы данных:
+    # Снижаем вероятность того, что система начнет активно использовать swap
+    - { name: 'vm.swappiness', value: '10' }
+    
+    # Базовая защита сети (опционально, но хорошая практика)
+    - { name: 'net.ipv4.conf.all.rp_filter', value: '1' }
+    - { name: 'net.ipv4.conf.default.rp_filter', value: '1' }

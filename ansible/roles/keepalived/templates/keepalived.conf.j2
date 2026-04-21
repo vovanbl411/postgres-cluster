@@ -1,0 +1,27 @@
+vrrp_script check_haproxy {
+    script "killall -0 haproxy" # Простая проверка: жив ли процесс HAProxy
+    interval 2
+    weight 2
+}
+
+vrrp_instance VI_1 {
+    state BACKUP # Все ноды в BACKUP, чтобы выбор шел по приоритету
+    interface eth1 # Убедись, что это имя интерфейса приватной сети
+    virtual_router_id 51
+    priority {{ 100 - (ansible_hostname | regex_replace('[^\d]', '') | int) }} 
+
+    advert_int 1
+
+    authentication {
+        auth_type PASS
+        auth_pass pg_cluster_secret
+    }
+
+    virtual_ipaddress {
+        192.168.10.100/24
+    }
+
+    track_script {
+        check_haproxy
+    }
+}

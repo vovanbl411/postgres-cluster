@@ -1,0 +1,53 @@
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+
+defaults
+    log     global
+    mode    tcp
+    option  tcplog
+    option  dontlognull
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
+
+# Статистика HAProxy (полезно для мониторинга)
+listen stats
+    bind *:7000
+    mode http
+    stats enable
+    stats uri /
+
+# Основной вход для записи (RW)
+frontend postgres_write
+    bind *:5432
+    default_backend pg_master
+
+# Вход для чтения (RO) - опционально
+frontend postgres_read
+    bind *:5433
+    default_backend pg_replicas
+
+backend pg_master
+    mode tcp
+    option httpchk GET /master
+    http-check expect status 200
+    default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
+{% for host in groups['postgres_nodes'] %}
+    server {{ host }} {{ hostvars[host]['ansible_host'] }}:5432 check port 8008
+{% endfor %}
+
+backend pg_replicas
+    mode tcp
+    option httpchk GET /replica
+    http-check expect status 200
+    default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
+{% for host in groups['postgres_nodes'] %}
+    server {{ host }} {{ hostvars[host]['ansible_host'] }}:5432 check port 8008
+{% endfor %}

@@ -1,0 +1,30 @@
+# Базовые настройки
+datacenter = "dc1"
+data_dir = "/opt/consul"
+log_level = "INFO"
+node_name = "{{ inventory_hostname }}"
+
+# Сетевые настройки
+# [span_3](start_span)[span_4](start_span)Биндимся на IP из нашей приватной сети[span_3](end_span)[span_4](end_span)
+bind_addr = "{{ ansible_local_ip | default(ansible_default_ipv4.address) }}"
+client_addr = "0.0.0.0"
+
+server = true
+bootstrap_expect = 3
+
+# Автоматический сбор кластера
+# Здесь мы перечисляем приватные IP всех нод кластера
+retry_join = [
+{% for host in groups['postgres_nodes'] %}
+  "{{ hostvars[host]['ansible_host'] }}"{{ "," if not loop.last else "" }}
+{% endfor %}
+]
+
+# UI можно оставить включенным для дебага через туннель
+ui_config {
+  enabled = true
+}
+
+connect {
+  enabled = true
+}

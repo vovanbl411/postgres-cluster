@@ -1,0 +1,38 @@
+---
+- name: Install HashiCorp GPG key
+  apt_key:
+    url: https://apt.releases.hashicorp.com/gpg
+    state: present
+
+- name: Add HashiCorp repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main"
+    state: present
+
+- name: Install Consul
+  apt:
+    name: consul
+    state: present
+
+- name: Create Consul configuration directory
+  file:
+    path: /etc/consul.d
+    state: directory
+    owner: consul
+    group: consul
+    mode: '0755'
+
+- name: Deploy Consul configuration
+  template:
+    src: consul.hcl.j2
+    dest: /etc/consul.d/consul.hcl
+    owner: consul
+    group: consul
+    mode: '0640'
+  notify: restart consul
+
+- name: Ensure Consul is enabled and running
+  systemd:
+    name: consul
+    state: started
+    enabled: yes

@@ -1,0 +1,9 @@
+---
+- hosts: postgres_nodes
+  become: yes
+  roles:
+    - common
+    - consul
+    - postgres_patroni
+    - haproxy
+    - keepalived
