@@ -111,6 +111,6 @@ module "postgres_nodes" {
       bastion_ip    = twc_server_ip.connector_ip.ip
     })
 
-    filename        = "${path.module}/../ansible/inventory.ini"
+    filename        = "${path.module}/../../ansible/inventories/cloud.ini"
     file_permission = "0644"
   }

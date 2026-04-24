@@ -1,0 +1,22 @@
+services:
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: tf-minio
+    # Запуск от текущего пользователя (обычно 1000:1000)
+    user: "1000:1000"
+    ports:
+      - "9000:9000" # API для Terraform
+      - "9001:9001" # Консоль (даже если урезанная, она пригодится)
+    environment:
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER}"
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD}"
+      MINIO_PROMETHEUS_AUTH_TYPE: "public"
+    volumes:
+      - ${MINIO_DATA_PATH:-./minio_data}:/data
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3

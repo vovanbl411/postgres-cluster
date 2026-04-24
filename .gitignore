@@ -12,12 +12,15 @@ TERRAFORM_ANALYSIS.md
 **/terraform.tfvars
 **/terraform.tfvars.json
 **/.terraform.lock.hcl
+secrets.tfvars
+*.secret
 
 # Ansible files
 **/*.retry
 **/inventory.ini
 **/inventory.yml
 **/inventory.yaml
+ansible/ansible.log
 
 # General
 .DS_Store
@@ -28,3 +31,4 @@ TERRAFORM_ANALYSIS.md
 .env
 .vscode/
 .idea/
+minio-state/minio_data/

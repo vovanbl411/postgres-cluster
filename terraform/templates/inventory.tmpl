@@ -1,0 +1,21 @@
+[all:vars]
+ansible_user=vladimir
+ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
+[controllers]
+%{ for name, config in nodes ~}
+%{ if config.role == "controller" ~}
+${name} ansible_host=${config.ip}
+%{ endif ~}
+%{ endfor ~}
+
+[workers]
+%{ for name, config in nodes ~}
+%{ if config.role == "worker" ~}
+${name} ansible_host=${config.ip}
+%{ endif ~}
+%{ endfor ~}
+
+[k8s:children]
+controllers
+workers
