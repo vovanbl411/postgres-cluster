@@ -104,3 +104,13 @@ module "postgres_nodes" {
     source_server_id = twc_server.connector.id
     type             = "ipv4"
   }
+
+  resource "local_file" "ansible_inventory" {
+    content         = templatefile("${path.module}/inventory.tmpl", {
+      pg_ips        = module.postgres_nodes.private_ips
+      bastion_ip    = twc_server_ip.connector_ip.ip
+    })
+
+    filename        = "${path.module}/../ansible/inventory.ini"
+    file_permission = "0644"
+  }

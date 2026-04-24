@@ -19,26 +19,26 @@ defaults
 
 # Статистика HAProxy (полезно для мониторинга)
 listen stats
-    bind *:7000
+    bind 192.168.10.100:7000
     mode http
     stats enable
     stats uri /
 
 # Основной вход для записи (RW)
 frontend postgres_write
-    bind *:5432
+    bind 192.168.10.100:5432
     default_backend pg_master
 
 # Вход для чтения (RO) - опционально
 frontend postgres_read
-    bind *:5433
+    bind 192.168.10.100:5433
     default_backend pg_replicas
 
 backend pg_master
     mode tcp
     option httpchk GET /master
     http-check expect status 200
-    default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
+    default-server inter 5s fall 3 rise 2 on-marked-down shutdown-sessions
 {% for host in groups['postgres_nodes'] %}
     server {{ host }} {{ hostvars[host]['ansible_host'] }}:5432 check port 8008
 {% endfor %}
@@ -47,7 +47,7 @@ backend pg_replicas
     mode tcp
     option httpchk GET /replica
     http-check expect status 200
-    default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
+    default-server inter 5s fall 3 rise 2 on-marked-down shutdown-sessions
 {% for host in groups['postgres_nodes'] %}
     server {{ host }} {{ hostvars[host]['ansible_host'] }}:5432 check port 8008
 {% endfor %}

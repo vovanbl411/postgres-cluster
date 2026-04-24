@@ -1,0 +1,61 @@
+version: '3'
+
+dotenv: ['../.env.local']
+
+env:
+  YELLOW: "\\033[33m"
+  GREEN:  "\\033[32m"
+  RED:    "\\033[31m"
+  RESET:  "\\033[0m"
+
+tasks:
+  default: help
+
+  help:
+    desc: Показать доступные команды
+    cmds:
+      - |
+        echo "{{.YELLOW}}Доступные команды:{{.RESET}}"
+        echo "  task init    - Инициализация бэкенда в Cloudflare R2"
+        echo "  task plan    - Просмотр изменений"
+        echo "  task apply   - Применение конфигурации"
+        echo "  task destroy - Удаление всей инфраструктуры"
+
+  init:
+    desc: Инициализация бэкенда в Cloudflare R2
+    cmds:
+       - echo "{{.GREEN}}>>> Инициализация бэкенда в R2...{{.RESET}}"
+       - |
+          terraform init \
+            -backend-config="endpoints={s3=\"{{.R2_ENDPOINT}}\"}" \
+            -backend-config="access_key=$AWS_ACCESS_KEY_ID" \
+            -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY" \
+            -backend-config="skip_credentials_validation=true" \
+            -backend-config="skip_region_validation=true" \
+            -backend-config="skip_metadata_api_check=true" \
+            -backend-config="use_path_style=true" \
+            -backend-config="skip_requesting_account_id=true" \
+            -reconfigure
+
+  plan:
+    desc: Просмотр изменений
+    cmds:
+      - |
+        echo "{{.GREEN}}>>> Планирование изменений...{{.RESET}}"
+        terraform plan
+
+  apply:
+    desc: Применение конфигурации
+    cmds:
+      - |
+        echo "{{.GREEN}}>>> Применение конфигурации...{{.RESET}}"
+        terraform apply -auto-approve
+
+  destroy:
+    desc: Удаление всей инфраструктуры
+    interactive: true
+    cmds:
+      - |
+        echo "{{.YELLOW}}>>> ВНИМАНИЕ: Удаление инфраструктуры через 5 секунд...{{.RESET}}"
+        sleep 5
+        terraform destroy -auto-approve

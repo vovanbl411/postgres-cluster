@@ -2,7 +2,7 @@
 - name: Install PostgreSQL and Patroni
   apt:
     name:
-      - postgresql-16
+      - postgresql
       - patroni
       - python3-psycopg2
       - python3-consul
@@ -13,7 +13,14 @@
     name: postgresql
     state: stopped
     enabled: no
-  comment: "Patroni will manage PostgreSQL lifecycle"
+
+- name: Drop default PG cluster
+  command: pg_dropcluster {{ postgres_version }} main --stop
+  register: drop_result
+  failed_when:
+    - drop_result.rc != 0
+    - "'does not exist' not in drop_result.stderr"
+  changed_when: drop_result.rc == 0 
 
 - name: Create Patroni configuration directory
   file:
@@ -23,6 +30,14 @@
     group: postgres
     mode: '0750'
 
+- name: Ensure PostgreSQL data directory exists and is clean
+  file:
+    path: "/var/lib/postgresql/{{ postgres_version }}/main"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0700'
+
 - name: Generate Patroni configuration
   template:
     src: patroni.yml.j2
@@ -30,16 +45,15 @@
     owner: postgres
     group: postgres
     mode: '0640'
-  notify: restart patroni
 
 - name: Ensure Patroni systemd unit is present
   template:
     src: patroni.service.j2
     dest: /etc/systemd/system/patroni.service
-  notify: reload systemd
 
 - name: Start and enable Patroni
   systemd:
     name: patroni
     state: started
     enabled: yes
+  notify: restart patroni

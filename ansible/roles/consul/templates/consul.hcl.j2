@@ -6,7 +6,7 @@ node_name = "{{ inventory_hostname }}"
 
 # Сетевые настройки
 # [span_3](start_span)[span_4](start_span)Биндимся на IP из нашей приватной сети[span_3](end_span)[span_4](end_span)
-bind_addr = "{{ ansible_local_ip | default(ansible_default_ipv4.address) }}"
+bind_addr = "{{ ansible_host }}"
 client_addr = "0.0.0.0"
 
 server = true

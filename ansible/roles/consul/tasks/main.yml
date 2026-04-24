@@ -1,18 +1,42 @@
 ---
-- name: Install HashiCorp GPG key
-  apt_key:
-    url: https://apt.releases.hashicorp.com/gpg
-    state: present
+- name: Create APT keyrings directory
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
 
-- name: Add HashiCorp repository
-  apt_repository:
-    repo: "deb [arch=amd64] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main"
-    state: present
+- name: Copy consul binary
+  copy:
+    src: "/home/vladimir/Downloads/consul"
+    dest: "/usr/bin"
+    mode: "0755"
 
-- name: Install Consul
-  apt:
+- name: Create consul system group
+  group:
     name: consul
-    state: present
+    system: yes
+
+- name: Create consul system user  
+  user:
+    name: consul
+    group: consul
+    system: yes
+    shell: /usr/sbin/nologin
+    create_home: no
+    home: /var/lib/consul
+
+- name: Create Consul data directory
+  file:
+    path: /opt/consul
+    state: directory
+    owner: consul
+    group: consul
+    mode: '0750'
+
+- name: Consul systemd configuration
+  template:
+    src: consul.service.j2
+    dest: /etc/systemd/system/consul.service
 
 - name: Create Consul configuration directory
   file:

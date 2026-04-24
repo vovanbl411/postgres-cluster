@@ -1,3 +1,4 @@
 ---
 replication_password: "password"
 superuser_password: "password"
+postgres_version: "17"

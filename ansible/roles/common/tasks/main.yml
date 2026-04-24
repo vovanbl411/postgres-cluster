@@ -16,6 +16,7 @@
       - apt-transport-https
       - acl # Требуется для корректной работы Ansible с непривилегированными пользователями
       - htop
+      - unzip
     state: present
 
 - name: Ensure Chrony is enabled and running

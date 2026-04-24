@@ -1,16 +1,33 @@
 vrrp_script check_haproxy {
-    script "killall -0 haproxy" # Простая проверка: жив ли процесс HAProxy
+    script "/usr/bin/killall -0 haproxy" # Простая проверка: жив ли процесс HAProxy
     interval 2
     weight 2
+    user root
+}
+
+vrrp_script check_patroni_leader {
+    script "/usr/bin/curl -f -s -m 1 http://127.0.0.1:8008/master"
+    interval 2
+    weight 10
+    user root
 }
 
 vrrp_instance VI_1 {
     state BACKUP # Все ноды в BACKUP, чтобы выбор шел по приоритету
-    interface eth1 # Убедись, что это имя интерфейса приватной сети
+    interface eth1 # имя интерфейса приватной сети
     virtual_router_id 51
-    priority {{ 100 - (ansible_hostname | regex_replace('[^\d]', '') | int) }} 
+    priority {{ 100 - (inventory_hostname | regex_replace('[^\d]', '') | int) }} 
 
     advert_int 1
+
+    unicast_src_ip {{ ansible_host }}
+    unicast_peer {
+        {% for host in groups['postgres_nodes'] %}
+        {% if hostvars[host]['ansible_host'] != ansible_host %}
+        {{ hostvars[host]['ansible_host'] }}
+        {% endif %}
+        {% endfor %}
+    }
 
     authentication {
         auth_type PASS
@@ -18,10 +35,11 @@ vrrp_instance VI_1 {
     }
 
     virtual_ipaddress {
-        192.168.10.100/24
+        192.168.10.100/32
     }
 
     track_script {
         check_haproxy
+        check_patroni_leader
     }
 }

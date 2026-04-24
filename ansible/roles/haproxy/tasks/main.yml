@@ -14,8 +14,7 @@
   notify: restart haproxy
 
 - name: Ensure HAProxy is enables and running
-  running:
-    systemd:
-      name: haproxy
-      state: started
-      enabled: yes
+  systemd:
+    name: haproxy
+    state: started
+    enabled: yes
