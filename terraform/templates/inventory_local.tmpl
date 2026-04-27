@@ -19,6 +19,13 @@ ${name} ansible_host=${config.ip}
 %{ endif ~}
 %{ endfor ~}
 
+[monitoring]
+%{ for name, config in nodes ~}
+%{ if config.role == "monitoring" ~}
+${name} ansible_host=${config.ip}
+%{ endif ~}
+%{ endfor ~}
+
 [k8s:children]
 controllers
 workers
