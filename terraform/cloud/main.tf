@@ -78,6 +78,13 @@ module "postgres_nodes" {
     proxied = true
   }
 
+resource "tls_private_key" "wg_bastion_key" {
+  algorithm = "ED25519"
+}
+
+resource "tls_private_key" "wg_local_key" {
+  algorithm = "ED25519"
+}
   resource "twc_server" "connector" {
     name = "cloudflare-connector"
     image_id = data.twc_image.connector.id
@@ -95,7 +102,7 @@ module "postgres_nodes" {
       id = twc_vpc.cluster_net.id
     }
 
-    cloud_init = templatefile("${path.module}/setup.sh.tpl", {
+    cloud_init = templatefile("${path.module}/../templates/setup_cloud.sh.tpl", {
       tunnel_token = cloudflare_zero_trust_tunnel_cloudflared.ssh_tunnel.tunnel_token
     })
   }
@@ -106,7 +113,7 @@ module "postgres_nodes" {
   }
 
   resource "local_file" "ansible_inventory" {
-    content         = templatefile("${path.module}/inventory.tmpl", {
+    content         = templatefile("${path.module}/../templates/inventory_cloud.tmpl", {
       pg_ips        = module.postgres_nodes.private_ips
       bastion_ip    = twc_server_ip.connector_ip.ip
     })

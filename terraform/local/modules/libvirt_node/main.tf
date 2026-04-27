@@ -23,7 +23,7 @@ resource "libvirt_domain" "node" {
   name   = var.name
   memory = var.memory
   vcpu   = var.vcpu
-  qemu_agent = true
+  # qemu_agent = true
 
   cloudinit = libvirt_cloudinit_disk.commoninit.id
 

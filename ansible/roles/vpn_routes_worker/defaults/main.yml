@@ -1,0 +1,4 @@
+---
+vpn_gateway_ip: "10.0.0.10"             # IP нашего controller-0
+target_network: "192.168.10.0/24"      # Сеть PostgreSQL в облаке
+route_service_name: "vpn-route-timeweb"

@@ -1,0 +1,64 @@
+---
+- name: Create bin directory if it doesn't exist
+  file:
+    path: /usr/local/bin
+    state: directory
+    mode: '0755'
+
+- name: Download Kubernetes binaries
+  get_url:
+    url: "https://dl.k8s.io/release/v{{ k8s_version }}/bin/linux/amd64/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    mode: '0755'
+    validate_certs: no
+  loop:
+    - kubeadm
+    - kubelet
+    - kubectl
+
+- name: Install CNI plugins (needed for kubelet)
+  block:
+    - name: Create CNI directory
+      file:
+        path: /opt/cni/bin
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Download and Unpack CNI plugins
+      unarchive:
+        src: "https://github.com/containernetworking/plugins/releases/download/v1.5.0/cni-plugins-linux-amd64-v1.5.0.tgz"
+        dest: /opt/cni/bin
+        remote_src: yes
+        validate_certs: no
+        owner: root
+        group: root
+
+- name: Install crictl (needed for kubeadm)
+  unarchive:
+    src: "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.30.0/crictl-v1.30.0-linux-amd64.tar.gz"
+    dest: /usr/local/bin
+    remote_src: yes
+    validate_certs: no
+
+- name: Set up kubelet service unit
+  template:
+    src: kubelet.service.j2
+    dest: /etc/systemd/system/kubelet.service
+
+- name: Create kubelet.service.d directory
+  file:
+    path: /etc/systemd/system/kubelet.service.d
+    state: directory
+
+- name: Set up kubeadm kubelet drop-in
+  template:
+    src: 10-kubeadm.conf.j2
+    dest: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+
+- name: Reload systemd and enable kubelet
+  systemd:
+    daemon_reload: yes
+    name: kubelet
+    enabled: yes

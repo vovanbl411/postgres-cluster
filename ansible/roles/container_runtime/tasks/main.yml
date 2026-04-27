@@ -1,0 +1,21 @@
+---
+- name: Install containerd
+  apt:
+    name: containerd
+    state: present
+
+- name: Create containerd config directory
+  file:
+    path: /etc/containerd
+    state: directory
+
+- name: Configure containerd
+  template:
+    src: config.toml.j2
+    dest: /etc/containerd/config.toml
+
+- name: Ensure containerd is started
+  service:
+    name: containerd
+    state: started
+    enabled: yes

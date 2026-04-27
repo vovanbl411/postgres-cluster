@@ -1,0 +1,55 @@
+---
+- name: Update CA certificates properly
+  apt:
+    name: ca-certificates
+    state: latest
+    update_cache: yes
+
+- name: Disable SWAP (K8s requirement)
+  shell: |
+    swapoff -a
+    sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+  when: ansible_swaptotal_mb > 0
+
+- name: Load kernel modules
+  modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - overlay
+    - br_netfilter
+
+- name: Set up kernel modules on boot
+  copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: |
+      overlay
+      br_netfilter
+
+- name: Configure sysctl for networking
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.d/k8s.conf
+  loop:
+    - { key: 'net.bridge.bridge-nf-call-iptables', value: '1' }
+    - { key: 'net.bridge.bridge-nf-call-ip6tables', value: '1' }
+    - { key: 'net.ipv4.ip_forward', value: '1' }
+
+- name: Install base dependencies
+  apt:
+    name: [apt-transport-https, ca-certificates, curl, gpg, socat, conntrack]
+    update_cache: yes
+
+- name: Install Python dependencies for k8s modules
+  apt:
+    name: [python3-kubernetes, python3-yaml]
+    state: present
+
+- name: Mount BPF filesystem
+  ansible.posix.mount:
+    path: /sys/fs/bpf
+    src: bpffs
+    fstype: bpf
+    state: mounted

@@ -1,0 +1,67 @@
+---
+- name: Create kubernetes dirs
+  ansible.builtin.file:
+    path: "/etc/kubernetes"
+    state: directory
+    mode: '0750'
+
+- name: Copy kubeadm config
+  ansible.builtin.template:
+    src: kubeadm-config.yaml.j2
+    dest: /etc/kubernetes/kubeadm-config.yaml
+    mode: '0640'
+
+- name: Check if cluster is already initialized
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: k8s_admin_conf
+
+- name: Initialize Kubernetes cluster
+  ansible.builtin.command: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml
+  when: not k8s_admin_conf.stat.exists
+  register: kubeadm_init
+  changed_when: "'Your Kubernetes control-plane has initialized successfully' in kubeadm_init.stdout"
+
+- name: Ensure kubeconfig directory exists for admin user
+  ansible.builtin.file:
+    path: "/home/{{ k8s_admin_user }}/.kube"
+    state: directory
+    owner: "{{ k8s_admin_user }}"
+    group: "{{ k8s_admin_user }}"
+    mode: '0755'
+
+- name: Copy admin.conf to admin user kubeconfig
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "/home/{{ k8s_admin_user }}/.kube/config"
+    remote_src: true
+    owner: "{{ k8s_admin_user }}"
+    group: "{{ k8s_admin_user }}"
+    mode: '0600'
+
+- name: Ensure kubeconfig directory exists for root
+  ansible.builtin.file:
+    path: "/root/.kube"
+    state: directory
+    mode: '0750'
+
+- name: Copy admin.conf to root kubeconfig
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "/root/.kube/config"
+    remote_src: true
+    mode: '0600'
+
+- name: Generate join command
+  ansible.builtin.command: kubeadm token create --print-join-command
+  register: join_command_raw
+  changed_when: false
+  run_once: true
+  when: inventory_hostname in groups['controllers'] | default([inventory_hostname])
+
+- name: Save join command to file
+  ansible.builtin.copy:
+    content: "{{ join_command_raw.stdout }}"
+    dest: /etc/kubernetes/join-command.sh
+    mode: '0600'
+  when: join_command_raw.stdout is defined and join_command_raw.stdout | length > 0

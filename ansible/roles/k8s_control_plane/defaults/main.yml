@@ -1,0 +1,7 @@
+---
+k8s_admin_user: "{{ ansible_env.SUDO_USER | default(ansible_user, true) | default(ansible_user_id) }}"
+k8s_pod_subnet: "10.244.0.0/16"
+k8s_service_subnet: "10.96.0.0/12"
+k8s_version: "v1.35.0"
+k8s_extra_cert_sans: []
+# k8s_control_plane_endpoint: "lb.example.com:6443"  # раскомментировать для HA

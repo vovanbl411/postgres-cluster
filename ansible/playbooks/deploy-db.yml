@@ -1,0 +1,10 @@
+---
+- name: Setup and Install HA Postgres-cluster
+  hosts: postgres_nodes
+  become: yes
+  roles:
+    - common
+    - consul
+    - postgres_patroni
+    - haproxy
+    - keepalived

@@ -1,0 +1,27 @@
+---
+- name: Check if join command file exists on control plane
+  ansible.builtin.stat:
+    path: /etc/kubernetes/join-command.sh
+  delegate_to: "{{ groups['controllers'][0] }}"
+  register: join_cmd_file
+
+- name: Fail if join command is missing
+  ansible.builtin.fail:
+    msg: "Join command not found on {{ groups['controllers'][0] }}. Ensure control plane is initialized and k8s_control_plane role ran successfully."
+  when: not join_cmd_file.stat.exists
+
+- name: Read join command from control plane
+  ansible.builtin.command: cat /etc/kubernetes/join-command.sh
+  delegate_to: "{{ groups['controllers'][0] }}"
+  register: join_cmd
+  changed_when: false
+
+- name: Join worker nodes to cluster
+  ansible.builtin.command: "{{ join_cmd.stdout }}"
+  args:
+    creates: /etc/kubernetes/kubelet.conf
+  register: worker_join
+  changed_when: "'This node has joined the cluster' in worker_join.stdout"
+  retries: 5
+  delay: 15
+  until: worker_join is succeeded

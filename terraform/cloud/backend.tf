@@ -11,9 +11,9 @@ terraform {
     # region                      = "auto"
     # endpoint будут заданы в workflow
 
-    endpoints = {
-    s3 = ""
-  }
+  #   endpoints = {
+  #   s3 = ""
+  # }
 
   }
 }

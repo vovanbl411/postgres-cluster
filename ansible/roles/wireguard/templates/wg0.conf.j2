@@ -1,0 +1,26 @@
+[Interface]
+Address = {{ wg_tunnel_ip }}/24
+ListenPort = 51820
+PrivateKey = {{ wg_private_key }}
+{% if inventory_hostname == 'bastion-host' %}
+# На бастионе натим трафик из туннеля в интерфейс сети Postgres (замени eth1 на нужный, если он другой)
+PostUp = iptables -t nat -A POSTROUTING -s 10.200.0.0/24 -o eth1 -j MASQUERADE
+PostDown = iptables -t nat -D POSTROUTING -s 10.200.0.0/24 -o eth1 -j MASQUERADE
+{% else %}
+# На controller-0 натим ТОЛЬКО трафик, уходящий в WireGuard
+PostUp = iptables -t nat -A POSTROUTING -o wg0 -j MASQUERADE
+PostDown = iptables -t nat -D POSTROUTING -o wg0 -j MASQUERADE
+{% endif %}
+
+[Peer]
+{% if inventory_hostname == 'bastion-host' %}
+# Локальный кластер
+PublicKey = {{ hostvars['controller-0'].wg_public_key }}
+AllowedIPs = 10.200.0.2/32, 10.0.0.10/32
+{% else %}
+# Бастион Timeweb
+PublicKey = {{ hostvars['bastion-host'].wg_public_key }}
+Endpoint = {{ hostvars['bastion-host'].ansible_host }}:51820
+AllowedIPs = 10.200.0.1/32, 192.168.10.0/24
+PersistentKeepalive = 25
+{% endif %}

@@ -1,0 +1,14 @@
+[Unit]
+Description=Static Route to Timeweb via Controller
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Проверяем наличие маршрута перед добавлением, чтобы избежать ошибок в логах
+ExecStart=/bin/bash -c "ip route show {{ target_network }} | grep -q 'via {{ vpn_gateway_ip }}' || ip route add {{ target_network }} via {{ vpn_gateway_ip }}"
+ExecStop=ip route del {{ target_network }} via {{ vpn_gateway_ip }}
+
+[Install]
+WantedBy=multi-user.target

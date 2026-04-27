@@ -20,13 +20,13 @@ module "k8s_nodes" {
   network_name   = libvirt_network.k8s_network.name
   
   # Путь к общему шаблону
-  cloudinit_template_path = "${path.module}/../templates/cloud_init.cfg"
+  cloudinit_template_path = "${path.module}/../templates/cloud_init_local.cfg"
   ssh_public_key          = file(var.ssh_public_key_path)
 }
 
 # Генерация инвентаря теперь обращается к выходам модуля
 resource "local_file" "ansible_inventory" {
-  content = templatefile("${path.module}/../templates/inventory.tmpl", {
+  content = templatefile("${path.module}/../templates/inventory_local.tmpl", {
     nodes = {
       for name, config in var.k8s_nodes : name => {
         ip = module.k8s_nodes[name].node_ip

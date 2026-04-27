@@ -1,0 +1,5 @@
+---
+- name: restart_containerd
+  service:
+    name: containerd
+    state: restarted

@@ -1,0 +1,8 @@
+---
+- name: Setup WireGuard Tunnel
+  hosts: bastion, controllers
+  become: true
+  tasks:
+    - name: Configure WireGuard on both sides
+      include_role:
+        name: wireguard

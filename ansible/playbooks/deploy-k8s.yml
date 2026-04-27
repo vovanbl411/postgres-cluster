@@ -1,0 +1,22 @@
+---
+- name: Prepare all Kubernetes nodes
+  hosts: k8s
+  become: yes
+  roles:
+    - k8s_prep
+    - container_runtime
+    - k8s_install
+
+- name: Initialize Kubernetes Control Plane
+  hosts: controllers
+  become: yes
+  roles:
+    - k8s_control_plane
+    - k8s_cni
+
+- name: Join Worker Nodes
+  hosts: workers
+  become: yes
+  roles:
+    - k8s_workers
+    - vpn_routes_worker
