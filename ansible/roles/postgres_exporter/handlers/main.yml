@@ -4,3 +4,8 @@
     name: postgres_exporter
     state: restarted
     daemon_reload: true
+
+- name: Restart systemd-networkd
+  ansible.builtin.systemd:
+    name: systemd-networkd
+    state: restarted

@@ -5,8 +5,8 @@
   roles:
     - monitoring_server
 
-# - name: Deploy monitoring agents
-#   hosts: all:!monitoring
-#   become: true
-#   roles:
-#     - monitoring_agents
+- name: Deploy monitoring agents
+  hosts: all:!monitoring
+  become: true
+  roles:
+    - monitoring_agents

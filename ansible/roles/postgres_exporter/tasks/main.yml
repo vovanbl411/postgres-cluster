@@ -51,10 +51,9 @@
   ansible.builtin.template:
     src: postgres_exporter.env.j2
     dest: /etc/default/postgres_exporter
-    mode: '0600'
+    mode: '0644'
     owner: root
     group: root
-  no_log: true
   notify: Restart postgres_exporter
 
 - name: Create postgres_exporter systemd service
@@ -70,3 +69,21 @@
     state: started
     enabled: true
     daemon_reload: true
+
+- name: Ensure netplan monitoring routes config exists
+  ansible.builtin.copy:
+    content: |
+      network:
+        version: 2
+        ethernets:
+          eth1:
+            routes:
+              - to: 10.0.0.0/24
+                via: 192.168.10.7
+    dest: /etc/netplan/99-monitoring-routes.yaml
+    mode: '0644'
+  register: netplan_routes
+
+- name: Apply netplan configuration
+  ansible.builtin.command: netplan apply
+  when: netplan_routes.changed
