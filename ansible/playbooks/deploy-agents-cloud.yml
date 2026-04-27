@@ -1,0 +1,10 @@
+---
+- name: Deploy monitoring agents to cloud infrastructure
+  hosts: bastion
+  become: true
+  roles:
+    - role: monitoring_agents
+      vars:
+        monitoring_agent_install_wireguard_exporter: true
+        # Для bastion: vmagent шлёт в monitoring_server через туннель
+        remote_write_url: "http://10.0.0.30:8428/api/v1/write"

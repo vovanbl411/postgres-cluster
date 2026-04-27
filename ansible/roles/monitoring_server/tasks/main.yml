@@ -1,0 +1,248 @@
+---
+- name: Ensure monitoring group exists
+  ansible.builtin.group:
+    name: "{{ monitoring_group }}"
+    system: true
+    state: present
+
+- name: Ensure monitoring user exists
+  ansible.builtin.user:
+    name: "{{ monitoring_user }}"
+    group: "{{ monitoring_group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    home: "{{ victoria_metrics_data_dir }}"
+    state: present
+
+# ==================== VictoriaMetrics ====================
+
+- name: Create VictoriaMetrics directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ monitoring_user }}"
+    group: "{{ monitoring_group }}"
+    mode: '0750'
+  loop:
+    - "{{ victoria_metrics_data_dir }}"
+    - "{{ victoria_metrics_bin_dir }}"
+
+- name: Check if VictoriaMetrics binary exists
+  ansible.builtin.stat:
+    path: "{{ victoria_metrics_bin_dir }}/victoria-metrics-prod"
+  register: vm_binary
+
+- name: Check VictoriaMetrics version
+  ansible.builtin.command: "{{ victoria_metrics_bin_dir }}/victoria-metrics-prod --version"
+  register: vm_version_output
+  changed_when: false
+  ignore_errors: true
+  when: vm_binary.stat.exists
+
+- name: Download and install VictoriaMetrics
+  ansible.builtin.get_url:
+    url: "https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v{{ victoria_metrics_version }}/victoria-metrics-linux-amd64-v{{ victoria_metrics_version }}.tar.gz"
+    dest: "/tmp/victoria-metrics-{{ victoria_metrics_version }}.tar.gz"
+    mode: '0644'
+  when: >
+    not vm_binary.stat.exists or
+    (vm_version_output.stdout is not defined or
+     victoria_metrics_version not in vm_version_output.stdout)
+
+- name: Extract VictoriaMetrics binary
+  ansible.builtin.unarchive:
+    src: "/tmp/victoria-metrics-{{ victoria_metrics_version }}.tar.gz"
+    dest: "/tmp/"
+    remote_src: true
+  when: >
+    not vm_binary.stat.exists or
+    (vm_version_output.stdout is not defined or
+     victoria_metrics_version not in vm_version_output.stdout)
+
+- name: Move VictoriaMetrics binary to bin dir
+  ansible.builtin.copy:
+    src: "/tmp/victoria-metrics-prod"
+    dest: "{{ victoria_metrics_bin_dir }}/victoria-metrics-prod"
+    mode: '0755'
+    remote_src: true
+  when: >
+    not vm_binary.stat.exists or
+    (vm_version_output.stdout is not defined or
+     victoria_metrics_version not in vm_version_output.stdout)
+  notify: Restart victoriametrics
+
+- name: Create VictoriaMetrics systemd service
+  ansible.builtin.template:
+    src: victoriametrics.service.j2
+    dest: /etc/systemd/system/victoria-metrics.service
+    mode: '0644'
+  notify:
+    - Restart victoriametrics
+
+- name: Ensure VictoriaMetrics is running
+  ansible.builtin.systemd:
+    name: victoria-metrics
+    state: started
+    enabled: true
+    daemon_reload: true
+
+# ==================== Grafana ====================
+
+# - name: Install dirmngr for gpg keyserver access
+#   ansible.builtin.apt:
+#     name: dirmngr
+#     state: present
+#     update_cache: true
+
+# - name: Ensure root gnupg directory exists
+#   ansible.builtin.file:
+#     path: /root/.gnupg
+#     state: directory
+#     mode: '0700'
+
+# - name: Ensure keyrings directory exists
+#   ansible.builtin.file:
+#     path: /usr/share/keyrings
+#     state: directory
+#     mode: '0755'
+
+# - name: Add Grafana GPG key via gpg keyserver
+#   ansible.builtin.shell: |
+#     set -e
+#     gpg --batch --no-default-keyring \
+#         --keyring /usr/share/keyrings/grafana.gpg \
+#         --keyserver keyserver.ubuntu.com \
+#         --recv-keys 9E439B102CF3C0C6
+#   args:
+#     creates: /usr/share/keyrings/grafana.gpg
+#   register: grafana_key_result
+#   changed_when: "'imported: 1' in grafana_key_result.stderr"
+
+# - name: Set permissions on Grafana keyring
+#   ansible.builtin.file:
+#     path: /usr/share/keyrings/grafana.gpg
+#     mode: '0644'
+
+# - name: Add Grafana APT repository (signed-by)
+#   ansible.builtin.apt_repository:
+#     repo: "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main"
+#     state: present
+#     filename: grafana
+
+# - name: Install Grafana
+#   ansible.builtin.apt:
+#     name: "grafana={{ grafana_version }}"
+#     state: present
+#     update_cache: true
+
+# - name: Configure Grafana
+#   ansible.builtin.template:
+#     src: grafana.ini.j2
+#     dest: /etc/grafana/grafana.ini
+#     owner: root
+#     group: grafana
+#     mode: '0640'
+#   notify: Restart grafana-server
+
+# - name: Configure Grafana datasources
+#   ansible.builtin.template:
+#     src: datasources.yml.j2
+#     dest: /etc/grafana/provisioning/datasources/victoriametrics.yml
+#     owner: root
+#     group: grafana
+#     mode: '0640'
+#   notify: Restart grafana-server
+
+# - name: Ensure Grafana is running
+#   ansible.builtin.systemd:
+#     name: grafana-server
+#     state: started
+#     enabled: true
+
+# ==================== Firewall ====================
+
+# - name: Allow monitoring ports
+#   ansible.builtin.ufw:
+#     rule: allow
+#     port: "{{ item }}"
+#     proto: tcp
+#   loop:
+#     - "{{ grafana_http_port }}"
+#     - "8428"
+
+- name: Allow VictoriaMetrics port
+  ansible.builtin.ufw:
+    rule: allow
+    port: "8428"
+    proto: tcp
+    from_ip: "10.0.0.0/24"
+
+# ==================== Build wireguard_exporter artifact ====================
+
+- name: Install build dependencies
+  ansible.builtin.apt:
+    name:
+      - build-essential
+      - curl
+    state: present
+
+- name: Install Rust toolchain
+  ansible.builtin.shell: |
+    set -e
+    if ! [ -f /root/.cargo/bin/cargo ]; then
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+    fi
+    . /root/.cargo/env
+    cargo --version
+  register: rust_install
+  changed_when: "'installed' in rust_install.stdout"
+
+- name: Create build directory
+  ansible.builtin.file:
+    path: /opt/wireguard_exporter
+    state: directory
+    mode: '0755'
+
+- name: Build prometheus_wireguard_exporter via cargo
+  ansible.builtin.shell: |
+    set -e
+    . /root/.cargo/env
+    cargo install prometheus_wireguard_exporter --version {{ wireguard_exporter_version }} --root /opt/wireguard_exporter
+  args:
+    creates: /opt/wireguard_exporter/bin/prometheus_wireguard_exporter
+  register: cargo_build
+  changed_when: "'Installing' in cargo_build.stdout or 'Compiling' in cargo_build.stdout"
+
+- name: Fetch compiled binary to Ansible controller
+  ansible.builtin.fetch:
+    src: /opt/wireguard_exporter/bin/prometheus_wireguard_exporter
+    dest: "/tmp/wireguard_exporter_{{ wireguard_exporter_version }}"
+    flat: true
+
+# ==================== Route for WireGuard tunnel ====================
+# Чтобы облако (bastion 10.200.0.1) могло достучаться до monitoring-server
+
+- name: Ensure route to WireGuard tunnel network exists
+  ansible.builtin.command: |
+    ip route add 10.200.0.0/24 via 10.0.0.10
+  register: route_add
+  changed_when: "'File exists' not in route_add.stderr"
+  failed_when: 
+    - route_add.rc != 0
+    - "'File exists' not in route_add.stderr"
+
+- name: Persist WireGuard route via systemd-networkd
+  ansible.builtin.copy:
+    content: |
+      [Route]
+      Destination=10.200.0.0/24
+      Gateway=10.0.0.10
+    dest: /etc/systemd/network/10-wg-tunnel.route
+    mode: '0644'
+  notify: Restart systemd-networkd
+
+- name: Ensure systemd-networkd is running
+  ansible.builtin.systemd:
+    name: systemd-networkd
+    state: started
+    enabled: true

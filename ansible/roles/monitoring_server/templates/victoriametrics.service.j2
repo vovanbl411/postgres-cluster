@@ -1,0 +1,19 @@
+[Unit]
+Description=VictoriaMetrics
+After=network.target
+
+[Service]
+Type=simple
+User={{ monitoring_user }}
+Group={{ monitoring_group }}
+ExecStart={{ victoria_metrics_bin_dir }}/victoria-metrics-prod \
+    -storageDataPath={{ victoria_metrics_data_dir }} \
+    -httpListenAddr={{ victoria_metrics_listen_addr }} \
+    -retentionPeriod={{ victoria_metrics_retention }} \
+    -promscrape.config.strictParse=false
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

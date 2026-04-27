@@ -1,0 +1,24 @@
+---
+# Версии
+victoria_metrics_version: "1.102.1"
+wireguard_exporter_version: "3.6.6"
+# grafana_version: "11.1.0"
+
+# Пользователь/группа
+monitoring_user: "monitoring"
+monitoring_group: "monitoring"
+
+# Директории
+victoria_metrics_data_dir: "/var/lib/victoria-metrics"
+victoria_metrics_bin_dir: "/usr/local/bin"
+# grafana_data_dir: "/var/lib/grafana"
+
+# Сеть
+victoria_metrics_listen_addr: "0.0.0.0:8428"
+victoria_metrics_retention: "7d"
+
+# grafana_http_port: 3000
+# grafana_domain: "{{ ansible_default_ipv4.address }}"
+
+# vmagent remoteWrite target (сам на себя)
+vmagent_remote_write_url: "http://localhost:8428/api/v1/write"

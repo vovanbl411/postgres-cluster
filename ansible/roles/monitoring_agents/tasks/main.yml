@@ -1,0 +1,58 @@
+---
+- name: Ensure monitoring group exists
+  ansible.builtin.group:
+    name: "{{ monitoring_group }}"
+    system: true
+    state: present
+
+- name: Ensure monitoring user exists
+  ansible.builtin.user:
+    name: "{{ monitoring_user }}"
+    group: "{{ monitoring_group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    state: present
+
+- name: Include node_exporter tasks
+  ansible.builtin.include_tasks: node_exporter.yml
+  when: monitoring_agent_install_node_exporter | bool
+
+- name: Include vmagent tasks
+  ansible.builtin.include_tasks: vmagent.yml
+  when: monitoring_agent_install_vmagent | bool
+
+- name: Include wireguard_exporter tasks
+  ansible.builtin.include_tasks: wireguard_exporter.yml
+  when: monitoring_agent_install_wireguard_exporter | bool
+
+- name: Check if ufw is installed
+  ansible.builtin.command: which ufw
+  register: ufw_check
+  changed_when: false
+  ignore_errors: true
+
+- name: Allow exporter ports via ufw
+  ansible.builtin.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+    from_ip: "10.0.0.0/24"
+  loop:
+    - "{{ node_exporter_port }}"
+    - "{{ vmagent_port }}"
+    - "{{ wireguard_exporter_port }}"
+  when: ufw_check.rc == 0
+
+- name: Allow exporter ports via iptables (fallback)
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ item }}"
+    source: "10.0.0.0/24"
+    jump: ACCEPT
+    comment: "monitoring agents"
+  loop:
+    - "{{ node_exporter_port }}"
+    - "{{ vmagent_port }}"
+    - "{{ wireguard_exporter_port }}"
+  when: ufw_check.rc != 0

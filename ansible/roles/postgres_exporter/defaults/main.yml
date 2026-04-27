@@ -1,0 +1,10 @@
+---
+postgres_exporter_version: "0.19.1"
+postgres_exporter_port: 9187
+
+# Пользователь в PostgreSQL
+postgres_exporter_db_user: "postgres_exporter"
+postgres_exporter_db_password: "postgres_exporter_pass"
+
+# DSN для подключения к localhost
+postgres_exporter_data_source_name: "postgresql://{{ postgres_exporter_db_user }}:{{ postgres_exporter_db_password }}@localhost:5432/postgres?sslmode=disable"

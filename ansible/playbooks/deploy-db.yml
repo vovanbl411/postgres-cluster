@@ -1,7 +1,7 @@
 ---
 - name: Setup and Install HA Postgres-cluster
   hosts: postgres_nodes
-  become: yes
+  become: true
   roles:
     - common
     - consul

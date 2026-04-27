@@ -1,0 +1,8 @@
+---
+- name: Deploy monitoring agents to K8s cluster
+  hosts: controllers:workers
+  become: true
+  roles:
+    - role: monitoring_agents
+      vars:
+        monitoring_agent_install_wireguard_exporter: false

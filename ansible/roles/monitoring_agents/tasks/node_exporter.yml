@@ -1,0 +1,62 @@
+---
+- name: Ensure node_exporter binary exists on Ansible controller
+  ansible.builtin.stat:
+    path: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+  delegate_to: localhost
+  become: false
+  register: ne_local_binary
+
+- name: Download node_exporter on Ansible controller
+  ansible.builtin.get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+    mode: '0644'
+  delegate_to: localhost
+  become: false
+  when: not ne_local_binary.stat.exists
+
+- name: Extract node_exporter on Ansible controller
+  ansible.builtin.unarchive:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+    dest: "/tmp/"
+    remote_src: true
+  delegate_to: localhost
+  become: false
+  when: not ne_local_binary.stat.exists
+
+- name: Check installed node_exporter version
+  ansible.builtin.stat:
+    path: "/usr/local/bin/node_exporter"
+  register: ne_binary
+
+- name: Check node_exporter version on target
+  ansible.builtin.command: "/usr/local/bin/node_exporter --version"
+  register: ne_version_output
+  changed_when: false
+  ignore_errors: true
+  when: ne_binary.stat.exists
+
+- name: Install node_exporter binary from controller
+  ansible.builtin.copy:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+    dest: "/usr/local/bin/node_exporter"
+    mode: '0755'
+  when: >
+    not ne_binary.stat.exists or
+    (ne_version_output.stdout is not defined or
+     node_exporter_version not in ne_version_output.stdout)
+  notify: Restart node_exporter
+
+- name: Create node_exporter service
+  ansible.builtin.template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    mode: '0644'
+  notify: Restart node_exporter
+
+- name: Start node_exporter
+  ansible.builtin.systemd:
+    name: node_exporter
+    state: started
+    enabled: true
+    daemon_reload: true

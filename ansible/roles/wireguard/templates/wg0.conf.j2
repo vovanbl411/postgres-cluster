@@ -16,7 +16,7 @@ PostDown = iptables -t nat -D POSTROUTING -o wg0 -j MASQUERADE
 {% if inventory_hostname == 'bastion-host' %}
 # Локальный кластер
 PublicKey = {{ hostvars['controller-0'].wg_public_key }}
-AllowedIPs = 10.200.0.2/32, 10.0.0.10/32
+AllowedIPs = 10.200.0.2/32, 10.0.0.0/24
 {% else %}
 # Бастион Timeweb
 PublicKey = {{ hostvars['bastion-host'].wg_public_key }}

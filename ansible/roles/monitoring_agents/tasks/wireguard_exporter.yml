@@ -1,0 +1,44 @@
+---
+- name: Check if prebuilt binary exists on Ansible controller
+  ansible.builtin.stat:
+    path: "/tmp/wireguard_exporter_{{ wireguard_exporter_version }}"
+  delegate_to: localhost
+  become: false
+  register: prebuilt_binary
+
+- name: Fail if prebuilt binary not found on controller
+  ansible.builtin.fail:
+    msg: "Prebuilt wireguard_exporter not found at /tmp/wireguard_exporter_{{ wireguard_exporter_version }} on Ansible controller. Run monitoring_server role first."
+  when: not prebuilt_binary.stat.exists
+
+- name: Install wireguard_exporter binary from controller
+  ansible.builtin.copy:
+    src: "/tmp/wireguard_exporter_{{ wireguard_exporter_version }}"
+    dest: /usr/local/bin/wireguard_exporter
+    mode: '0755'
+
+- name: Create wireguard_exporter systemd service
+  ansible.builtin.copy:
+    content: |
+      [Unit]
+      Description=WireGuard Exporter
+      After=network.target
+
+      [Service]
+      Type=simple
+      User=root
+      ExecStart=/usr/local/bin/wireguard_exporter -p {{ wireguard_exporter_port }}
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/wireguard_exporter.service
+    mode: '0644'
+  notify: Restart wireguard_exporter
+
+- name: Start wireguard_exporter
+  ansible.builtin.systemd:
+    name: wireguard_exporter
+    state: started
+    enabled: true
+    daemon_reload: true

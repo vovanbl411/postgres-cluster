@@ -1,0 +1,36 @@
+---
+# Флаги включения компонентов
+monitoring_agent_install_node_exporter: true
+monitoring_agent_install_vmagent: true
+monitoring_agent_install_wireguard_exporter: false  # Включаем только где нужно
+
+# Версии
+node_exporter_version: "1.8.2"
+vmagent_version: "1.102.1"
+wireguard_exporter_version: "3.6.6"
+
+# Пользователь/группа
+monitoring_user: "monitoring"
+monitoring_group: "monitoring"
+
+# Куда vmagent шлёт метрики (IP monitoring_server)
+remote_write_url: "http://10.0.0.30:8428/api/v1/write"
+
+# Порты
+node_exporter_port: 9100
+vmagent_port: 8429
+wireguard_exporter_port: 9586
+
+# Интервал сбора
+scrape_interval: "15s"
+
+# Список дополнительных targets для vmagent (опционально)
+vmagent_extra_scrape_targets: []
+# Пример:
+# vmagent_extra_scrape_targets:
+#   - job_name: 'postgres'
+#     targets: ['localhost:9187']
+
+# Postgres Exporter
+monitoring_agent_install_postgres_exporter: false
+postgres_exporter_port: 9187

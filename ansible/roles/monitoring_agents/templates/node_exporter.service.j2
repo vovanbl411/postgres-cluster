@@ -1,0 +1,16 @@
+[Unit]
+Description=Node Exporter
+After=network.target
+
+[Service]
+Type=simple
+User={{ monitoring_user }}
+Group={{ monitoring_group }}
+ExecStart=/usr/local/bin/node_exporter \
+    --web.listen-address=:{{ node_exporter_port }} \
+    --path.rootfs=/host
+    --collector.systemd
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

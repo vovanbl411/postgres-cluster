@@ -1,0 +1,21 @@
+global:
+  scrape_interval: {{ scrape_interval }}
+  external_labels:
+    instance: "{{ inventory_hostname }}"
+
+scrape_configs:
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:{{ node_exporter_port }}']
+
+  - job_name: 'wireguard'
+    static_configs:
+      - targets: ['localhost:{{ wireguard_exporter_port }}']
+
+{% if monitoring_agent_install_postgres_exporter | default(false) | bool %}
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['localhost:{{ postgres_exporter_port }}']
+        labels:
+          instance: "{{ inventory_hostname }}"
+{% endif %}

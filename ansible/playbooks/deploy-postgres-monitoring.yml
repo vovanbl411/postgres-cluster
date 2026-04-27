@@ -1,0 +1,9 @@
+---
+- name: Deploy postgres_exporter to Patroni nodes
+  hosts: postgres_nodes
+  become: true
+  roles:
+    - role: monitoring_agents
+      vars:
+        monitoring_agent_install_postgres_exporter: true
+    - postgres_exporter

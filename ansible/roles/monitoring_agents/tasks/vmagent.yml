@@ -1,0 +1,75 @@
+---
+- name: Ensure vmagent binary exists on Ansible controller
+  ansible.builtin.stat:
+    path: "/tmp/vmagent-prod"
+  delegate_to: localhost
+  become: false
+  register: vma_local_binary
+
+- name: Download vmutils on Ansible controller
+  ansible.builtin.get_url:
+    url: "https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v{{ vmagent_version }}/vmutils-linux-amd64-v{{ vmagent_version }}.tar.gz"
+    dest: "/tmp/vmutils-{{ vmagent_version }}.tar.gz"
+    mode: '0644'
+  delegate_to: localhost
+  become: false
+  when: not vma_local_binary.stat.exists
+
+- name: Extract vmutils on Ansible controller
+  ansible.builtin.unarchive:
+    src: "/tmp/vmutils-{{ vmagent_version }}.tar.gz"
+    dest: "/tmp/"
+    remote_src: true
+  delegate_to: localhost
+  become: false
+  when: not vma_local_binary.stat.exists
+
+- name: Ensure vmagent config directory exists
+  ansible.builtin.file:
+    path: /etc/vmagent
+    state: directory
+    mode: '0755'
+
+- name: Check installed vmagent version
+  ansible.builtin.stat:
+    path: "/usr/local/bin/vmagent-prod"
+  register: vma_binary
+
+- name: Check vmagent version on target
+  ansible.builtin.command: "/usr/local/bin/vmagent-prod --version"
+  register: vma_version_output
+  changed_when: false
+  ignore_errors: true
+  when: vma_binary.stat.exists
+
+- name: Install vmagent binary from controller
+  ansible.builtin.copy:
+    src: "/tmp/vmagent-prod"
+    dest: "/usr/local/bin/vmagent-prod"
+    mode: '0755'
+  when: >
+    not vma_binary.stat.exists or
+    (vma_version_output.stdout is not defined or
+     vmagent_version not in vma_version_output.stdout)
+  notify: Restart vmagent
+
+- name: Create vmagent scrape config
+  ansible.builtin.template:
+    src: vmagent-scrape.yml.j2
+    dest: /etc/vmagent/scrape.yml
+    mode: '0644'
+  notify: Restart vmagent
+
+- name: Create vmagent service
+  ansible.builtin.template:
+    src: vmagent.service.j2
+    dest: /etc/systemd/system/vmagent.service
+    mode: '0644'
+  notify: Restart vmagent
+
+- name: Start vmagent
+  ansible.builtin.systemd:
+    name: vmagent
+    state: started
+    enabled: true
+    daemon_reload: true
