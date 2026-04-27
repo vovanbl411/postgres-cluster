@@ -17,8 +17,7 @@ secrets.tfvars
 
 # Ansible files
 **/*.retry
-ansible/inventories/cloud.ini
-ansible/inventories/local.ini
+ansible/inventories/*
 **/inventory.yml
 **/inventory.yaml
 ansible/ansible.log
