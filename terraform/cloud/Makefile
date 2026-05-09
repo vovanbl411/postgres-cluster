@@ -1,5 +1,5 @@
 # Подгружаем переменные из .env.local
--include ../../.env.local
+-include ../../.env.cloud
 export
 
 # Цвета для вывода

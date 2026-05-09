@@ -1,0 +1,12 @@
+---
+- name: Setup GitLab Master
+  hosts: gitlab_master
+  become: true
+  roles:
+    - gitlab_master
+
+- name: Setup GitLab Runner
+  hosts: gitlab_runner
+  become: true
+  roles:
+    - gitlab_runner

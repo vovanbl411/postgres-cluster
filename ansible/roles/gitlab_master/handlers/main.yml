@@ -1,0 +1,5 @@
+---
+- name: Reconfigure GitLab
+  ansible.builtin.command: 
+    cmd: /usr/bin/gitlab-ctl reconfigure
+  changed_when: true

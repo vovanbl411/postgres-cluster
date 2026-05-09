@@ -28,7 +28,7 @@ ansible/ansible.log
 *.swp
 *.swo
 *~
-.env
+.env*
 .vscode/
 .idea/
 minio-state/minio_data/

@@ -1,0 +1,9 @@
+---
+- name: Create overlay network
+  community.docker.docker_network:
+    name: "{{ item.name }}"
+    driver: overlay
+    attachable: "{{ item.attachable | default(false) }}"
+    scope: swarm
+    state: present
+  loop: "{{ docker_swarm_overlay_networks }}"

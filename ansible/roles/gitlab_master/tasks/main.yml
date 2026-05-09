@@ -1,0 +1,68 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install dependencies
+  ansible.builtin.apt:
+    name:
+      - curl
+      - openssh-server
+      - ca-certificates
+      - tzdata
+      - perl
+    state: present
+
+- name: Add GitLab GPG key
+  ansible.builtin.get_url:
+    url: https://packages.gitlab.com/gitlab/gitlab-ce/gpgkey
+    dest: /etc/apt/keyrings/gitlab.asc
+    mode: '0644'
+
+- name: Add GitLab repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/gitlab.asc] https://packages.gitlab.com/gitlab/gitlab-ce/ubuntu/ noble main"
+    state: present
+    filename: gitlab
+
+- name: Update apt cache after adding repo
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install GitLab CE
+  ansible.builtin.apt:
+    name: "gitlab-ce={{ gitlab_version }}"
+    state: present
+  vars:
+    gitlab_version: "17.11.0-ce.0"
+
+- name: Deploy gitlab.rb config
+  ansible.builtin.template:
+    src: gitlab.rb.j2
+    dest: /etc/gitlab/gitlab.rb
+    mode: '0600'
+  notify: Reconfigure GitLab
+
+- name: Flush handlers now
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for GitLab to be ready
+  ansible.builtin.command: gitlab-ctl status
+  register: gitlab_status
+  until: gitlab_status.rc == 0
+  retries: 30
+  delay: 10
+  changed_when: false
+
+- name: Retrieve runner registration token
+  ansible.builtin.shell: |
+    gitlab-rails runner -e production "puts Gitlab::CurrentSettings.current_application_settings.runners_registration_token"
+  register: gitlab_runner_token_raw
+  changed_when: false
+
+- name: Ensure GitLab is started
+  ansible.builtin.systemd:
+    name: gitlab-runsvdir
+    state: started
+    enabled: true

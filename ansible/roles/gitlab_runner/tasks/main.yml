@@ -1,0 +1,71 @@
+---
+- name: Remove stale GitLab CE repository files
+  ansible.builtin.file:
+    path: "/etc/apt/sources.list.d/{{ item }}"
+    state: absent
+  loop:
+    - gitlab.list
+    - gitlab-ce.list
+    - gitlab_runner.list
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install dependencies
+  ansible.builtin.apt:
+    name:
+      - curl
+      - ca-certificates
+      - docker.io
+      - docker-compose-v2
+      - docker-buildx
+      - containerd
+    state: present
+
+- name: Add GitLab Runner GPG key
+  ansible.builtin.get_url:
+    url: https://packages.gitlab.com/runner/gitlab-runner/gpgkey
+    dest: /etc/apt/keyrings/gitlab-runner.asc
+    mode: '0644'
+
+- name: Add GitLab Runner repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/gitlab-runner.asc] https://packages.gitlab.com/runner/gitlab-runner/ubuntu/ noble main"
+    state: present
+    filename: gitlab-runner
+
+- name: Update apt cache after adding repo
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install GitLab Runner
+  ansible.builtin.apt:
+    name: gitlab-runner
+    state: present
+
+- name: Ensure GitLab Runner is started
+  ansible.builtin.systemd:
+    name: gitlab-runner
+    state: started
+    enabled: true
+
+- name: Check if runner already registered
+  ansible.builtin.command: gitlab-runner list
+  register: runner_list
+  changed_when: false
+
+- name: Register runner (non-interactive)
+  ansible.builtin.command: >
+    gitlab-runner register
+    --non-interactive
+    --url http://{{ hostvars[groups['gitlab_master'][0]]['ansible_default_ipv4']['address'] }}
+    --registration-token {{ hostvars[groups['gitlab_master'][0]]['gitlab_runner_token_raw']['stdout'] | trim }}
+    --executor shell
+    --tag-list docker,swarm
+    --run-untagged true
+    --locked false
+  register: runner_register
+  changed_when: "'Runner registered successfully' in runner_register.stdout"
+  failed_when: runner_register.rc != 0 and 'already exists' not in runner_register.stderr
