@@ -10,5 +10,5 @@ variable "ssh_public_key_path" {
 
 variable "network_name" {
   type    = string
-  default = "k8s-net"
+  default = "local-net"
 }

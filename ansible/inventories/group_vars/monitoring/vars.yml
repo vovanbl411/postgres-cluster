@@ -1,0 +1,8 @@
+---
+victoria_metrics_version: "1.102.1"
+victoria_metrics_retention: "7d"
+victoria_metrics_listen_addr: "0.0.0.0:8428"
+
+wg_tunnel_ip: "10.200.0.3"
+
+# victoria_metrics_listen_addr: "10.200.0.3:8428"

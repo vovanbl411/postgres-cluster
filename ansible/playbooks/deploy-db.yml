@@ -1,10 +1,18 @@
 ---
-- name: Setup and Install HA Postgres-cluster
+- name: Setup HA Postgres-cluster
   hosts: postgres_nodes
   become: true
   roles:
-    - common
-    - consul
-    - postgres_patroni
-    - haproxy
-    - keepalived
+    - role: common
+      tags: [postgres, base]
+    - role: consul
+      tags: [postgres, consul]
+    - role: postgres_patroni
+      tags: [postgres, patroni]
+    - role: haproxy
+      tags: [postgres, haproxy]
+    - role: keepalived
+      tags: [postgres, keepalived]
+    - role: monitoring/postgres_exporter
+      tags: [monitoring, postgres_exporter]
+      when: postgres_exporter_enabled | default(false)

@@ -1,0 +1,25 @@
+---
+- name: Read private key
+  ansible.builtin.slurp:
+    src: /etc/wireguard/private.key
+  register: wg_priv_key_slurp
+  no_log: true
+
+- name: Set private key fact
+  ansible.builtin.set_fact:
+    wg_private_key: "{{ wg_priv_key_slurp.content | b64decode | trim }}"
+  no_log: true
+
+- name: Create WireGuard config
+  ansible.builtin.template:
+    src: wg0.conf.j2
+    dest: /etc/wireguard/{{ wg_interface }}.conf
+    mode: '0600'
+  notify: restart wg
+
+- name: Enable and start WireGuard
+  ansible.builtin.systemd:
+    name: "wg-quick@{{ wg_interface }}"
+    state: started
+    enabled: true
+    daemon_reload: true

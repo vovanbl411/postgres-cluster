@@ -1,0 +1,45 @@
+---
+# TODO: Переехать в домен vpn/ или network/ при рефакторинге VPN
+- name: Ensure route to WireGuard tunnel network exists
+  ansible.builtin.command: |
+    ip route add 10.200.0.0/24 via 10.0.0.10
+  register: route_add
+  changed_when: "'File exists' not in route_add.stderr"
+  failed_when: 
+    - route_add.rc != 0
+    - "'File exists' not in route_add.stderr"
+
+- name: Persist WireGuard route via systemd-networkd
+  ansible.builtin.copy:
+    content: |
+      [Route]
+      Destination=10.200.0.0/24
+      Gateway=10.0.0.10
+    dest: /etc/systemd/network/10-wg-tunnel.route
+    mode: '0644'
+  notify: Restart systemd-networkd
+
+- name: Ensure systemd-networkd is running
+  ansible.builtin.systemd:
+    name: systemd-networkd
+    state: started
+    enabled: true
+
+- name: Ensure route to cloud VPC via controller-0
+  ansible.builtin.command: |
+    ip route add 192.168.10.0/24 via 10.0.0.10
+  register: vpc_route
+  changed_when: "'File exists' not in vpc_route.stderr"
+  failed_when:
+    - vpc_route.rc != 0
+    - "'File exists' not in vpc_route.stderr"
+
+- name: Persist VPC route via systemd-networkd
+  ansible.builtin.copy:
+    content: |
+      [Route]
+      Destination=192.168.10.0/24
+      Gateway=10.0.0.10
+    dest: /etc/systemd/network/20-cloud-vpc.route
+    mode: '0644'
+  notify: Restart systemd-networkd

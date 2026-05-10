@@ -1,0 +1,29 @@
+---
+# Глобальные monitoring настройки
+monitoring_server_host: "10.0.0.30"
+monitoring_server_port: 8428
+vmagent_remote_write_url: "http://{{ monitoring_server_host }}:{{ monitoring_server_port }}/api/v1/write"
+scrape_interval: "15s"
+monitoring_network_cidr: "10.0.0.0/24"
+
+# Агенты: глобальные defaults
+node_exporter_enabled: true
+vmagent_enabled: true
+wireguard_exporter_enabled: false
+postgres_exporter_enabled: false
+
+# WireGuard mesh registry
+wg_peers:
+  bastion-host:
+    tunnel_ip: "10.200.0.1"
+    is_hub: true
+    endpoint_host: "77.232.135.78"  # белый IP бастиона
+  monitoring-0:
+    tunnel_ip: "10.200.0.3"
+    is_hub: false
+  controller-0:
+    tunnel_ip: "10.200.0.2"
+    is_hub: false
+
+# Директория для ключей на контроллере
+wg_keys_dir: "{{ playbook_dir }}/../.wg-keys"

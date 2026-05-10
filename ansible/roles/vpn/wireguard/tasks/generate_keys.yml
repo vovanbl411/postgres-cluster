@@ -1,0 +1,40 @@
+---
+- name: Ensure WireGuard config directory exists
+  ansible.builtin.file:
+    path: /etc/wireguard
+    state: directory
+    mode: '0700'
+
+- name: Generate WireGuard private key
+  ansible.builtin.shell: |
+    set -e
+    wg genkey | tee /etc/wireguard/private.key
+  args:
+    creates: /etc/wireguard/private.key
+  no_log: true
+
+- name: Set strict permissions on private key
+  ansible.builtin.file:
+    path: /etc/wireguard/private.key
+    mode: '0600'
+
+- name: Generate WireGuard public key
+  ansible.builtin.shell: |
+    set -e
+    cat /etc/wireguard/private.key | wg pubkey | tee /etc/wireguard/public.key
+  args:
+    creates: /etc/wireguard/public.key
+
+- name: Ensure keys directory exists on controller
+  ansible.builtin.file:
+    path: "{{ wg_keys_dir }}"
+    state: directory
+    mode: '0750'
+  delegate_to: localhost
+  become: false
+
+- name: Fetch public key to controller
+  ansible.builtin.fetch:
+    src: /etc/wireguard/public.key
+    dest: "{{ wg_keys_dir }}/{{ inventory_hostname }}.pub"
+    flat: true

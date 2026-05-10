@@ -1,3 +1,20 @@
+resource "libvirt_network" "local_net" {
+  name      = var.network_name
+  mode      = "nat"
+  domain    = "local"
+  addresses = ["10.0.0.0/24"]
+
+  dhcp {
+    enabled = true
+  }
+
+  dns {
+    enabled    = true
+    local_only = false
+  }
+
+  autostart = true
+}
 
 # Свой базовый образ (чтобы не зависеть от тома в папке local)
 resource "libvirt_volume" "monitoring_base" {

@@ -1,0 +1,66 @@
+---
+- name: Check if prebuilt binary exists on Ansible controller
+  ansible.builtin.stat:
+    path: "{{ wireguard_exporter_binary_path }}"
+  delegate_to: localhost
+  become: false
+  register: prebuilt_binary
+
+- name: Fail if prebuilt binary not found on controller
+  ansible.builtin.fail:
+    msg: >
+      Prebuilt wireguard_exporter not found at {{ wireguard_exporter_binary_path }}.
+      Run: ansible-playbook playbooks/build-monitoring-artifacts.yml
+  when: not prebuilt_binary.stat.exists
+
+- name: Install wireguard_exporter binary from controller
+  ansible.builtin.copy:
+    src: "{{ wireguard_exporter_binary_path }}"
+    dest: /usr/local/bin/wireguard_exporter
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Create wireguard_exporter systemd service
+  ansible.builtin.copy:
+    content: |
+      [Unit]
+      Description=WireGuard Exporter
+      After=network.target
+
+      [Service]
+      Type=simple
+      User=root
+      ExecStart=/usr/local/bin/wireguard_exporter -p {{ wireguard_exporter_port }}
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/wireguard_exporter.service
+    mode: '0644'
+  notify: Restart wireguard_exporter
+
+- name: Start wireguard_exporter
+  ansible.builtin.systemd:
+    name: wireguard_exporter
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Allow wireguard_exporter port via ufw
+  ansible.builtin.ufw:
+    rule: allow
+    port: "{{ wireguard_exporter_port }}"
+    proto: tcp
+    from_ip: "{{ monitoring_network_cidr | default('10.0.0.0/24') }}"
+  when: ansible_facts.packages['ufw'] is defined
+
+- name: Allow wireguard_exporter port via iptables
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ wireguard_exporter_port }}"
+    source: "{{ monitoring_network_cidr | default('10.0.0.0/24') }}"
+    jump: ACCEPT
+    comment: "wireguard_exporter"
+  when: ansible_facts.packages['ufw'] is not defined

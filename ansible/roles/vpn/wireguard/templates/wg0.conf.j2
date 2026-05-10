@@ -1,0 +1,30 @@
+[Interface]
+Address = {{ wg_peers[inventory_hostname].tunnel_ip }}/24
+ListenPort = {{ wg_port }}
+PrivateKey = {{ wg_private_key }}
+
+{% if wg_peers[inventory_hostname].is_hub | default(false) %}
+# Hub — NAT для трафика из туннеля
+PostUp = iptables -t nat -A POSTROUTING -s 10.200.0.0/24 -o eth1 -j MASQUERADE
+PostDown = iptables -t nat -D POSTROUTING -s 10.200.0.0/24 -o eth1 -j MASQUERADE
+{% else %}
+# Spoke — NAT исходящего трафика
+PostUp = iptables -t nat -A POSTROUTING -o {{ wg_interface }} -j MASQUERADE
+PostDown = iptables -t nat -D POSTROUTING -o {{ wg_interface }} -j MASQUERADE
+{% endif %}
+
+{% for peer_name, peer in wg_peers.items() %}
+{% if peer_name != inventory_hostname %}
+{% set peer_pubkey = lookup('file', wg_keys_dir ~ '/' ~ peer_name ~ '.pub', errors='ignore') | default('') %}
+{% if peer_pubkey | length > 0 %}
+[Peer]
+# {{ peer_name }}
+PublicKey = {{ peer_pubkey }}
+AllowedIPs = {{ peer.tunnel_ip }}/32
+{% if not (wg_peers[inventory_hostname].is_hub | default(false)) and peer.is_hub | default(false) %}
+Endpoint = {{ peer.endpoint_host }}:{{ wg_port }}
+PersistentKeepalive = 25
+{% endif %}
+{% endif %}
+{% endif %}
+{% endfor %}

@@ -1,0 +1,4 @@
+---
+wireguard_exporter_version: "3.6.6"
+wireguard_exporter_port: 9586
+wireguard_exporter_binary_path: "/tmp/wireguard_exporter_{{ wireguard_exporter_version }}"

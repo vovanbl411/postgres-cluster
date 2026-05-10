@@ -1,0 +1,16 @@
+---
+victoria_metrics_version: "1.102.1"
+wireguard_exporter_version: "3.6.6"
+
+victoria_metrics_user: "victoria-metrics"
+victoria_metrics_group: "victoria-metrics"
+
+monitoring_user: "monitoring"
+monitoring_group: "monitoring"
+
+victoria_metrics_data_dir: "/var/lib/victoria-metrics"
+victoria_metrics_bin_dir: "/usr/local/bin"
+victoria_metrics_listen_addr: "0.0.0.0:8428"
+victoria_metrics_retention: "7d"
+
+monitoring_network_cidr: "10.0.0.0/24"

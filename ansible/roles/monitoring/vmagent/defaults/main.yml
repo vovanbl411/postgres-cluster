@@ -1,0 +1,12 @@
+---
+vmagent_version: "1.102.1"
+vmagent_port: 8429
+
+vmagent_user: "vmagent"
+vmagent_group: "vmagent"
+
+vmagent_remote_write_url: "http://localhost:8428/api/v1/write"
+scrape_interval: "15s"
+vmagent_extra_scrape_targets: []
+
+monitoring_network_cidr: "10.0.0.0/24"

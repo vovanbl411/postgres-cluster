@@ -1,0 +1,51 @@
+---
+- name: Install wireguard
+  apt:
+    name: wireguard
+    state: present
+
+- name: Enable IP Forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    state: present
+    reload: yes
+
+- name: Check if private key exists
+  stat:
+    path: /etc/wireguard/private.key
+  register: wg_private_key_file
+
+- name: Generate WireGuard private key
+  shell: wg genkey > /etc/wireguard/private.key
+  args:
+    creates: /etc/wireguard/private.key
+  when: not wg_private_key_file.stat.exists
+
+- name: Set strict permissions on private key
+  file:
+    path: /etc/wireguard/private.key
+    mode: '0600'
+
+- name: Get WireGuard private key
+  slurp:
+    src: /etc/wireguard/private.key
+  register: wg_priv_key_encoded
+
+- name: Generate WireGuard public key
+  shell: "cat /etc/wireguard/private.key | wg pubkey"
+  register: wg_pub_key_output
+  changed_when: false
+
+# Сохраняем ключи в факты для использования в шаблонах других хостов
+- name: Set WireGuard facts
+  set_fact:
+    wg_private_key: "{{ wg_priv_key_encoded.content | b64decode | trim }}"
+    wg_public_key: "{{ wg_pub_key_output.stdout | trim }}"
+
+- name: Create WireGuard config
+  template:
+    src: wg0.conf.j2
+    dest: /etc/wireguard/wg0.conf
+    mode: '0600'
+  notify: restart wg

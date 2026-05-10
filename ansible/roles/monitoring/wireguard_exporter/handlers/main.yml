@@ -1,0 +1,6 @@
+---
+- name: Restart wireguard_exporter
+  ansible.builtin.systemd:
+    name: wireguard_exporter
+    state: restarted
+    daemon_reload: true

@@ -1,0 +1,26 @@
+[server]
+http_port = {{ grafana_http_port }}
+domain = {{ grafana_domain }}
+root_url = %(protocol)s://%(domain)s:%(http_port)s/
+serve_from_sub_path = false
+
+[security]
+admin_user = admin
+# Сменить при первом запуске через ansible-vault или ручную настройку
+admin_password = admin
+
+[users]
+allow_sign_up = false
+auto_assign_org = true
+auto_assign_org_role = Viewer
+
+[auth.anonymous]
+enabled = false
+
+[analytics]
+reporting_enabled = false
+check_for_updates = false
+
+[log]
+mode = console
+level = info
