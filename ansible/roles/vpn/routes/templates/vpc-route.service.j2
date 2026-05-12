@@ -1,0 +1,13 @@
+[Unit]
+Description=Default route via VPC gateway (bastion)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash -c "ip route show default | grep -q 'via {{ vpc_gateway_ip }}' || ip route add default via {{ vpc_gateway_ip }} dev {{ vpc_interface }}"
+ExecStop=/bin/bash -c "ip route show default | grep -q 'via {{ vpc_gateway_ip }}' && ip route del default via {{ vpc_gateway_ip }} dev {{ vpc_interface }} || true"
+
+[Install]
+WantedBy=multi-user.target

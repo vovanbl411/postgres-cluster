@@ -1,6 +1,6 @@
 ---
 - name: Enable IP forwarding
-  ansible.posix.sysctl:
+  ansible.builtin.sysctl:
     name: net.ipv4.ip_forward
     value: '1'
     state: present
@@ -11,24 +11,31 @@
     name: iptables-persistent
     state: present
 
-- name: NAT for swarm nodes
+- name: NAT for VPC nodes
   ansible.builtin.iptables:
     table: nat
     chain: POSTROUTING
-    source: 192.168.10.0/24
+    source: "{{ vpc_cidr }}"
     jump: MASQUERADE
-    comment: "NAT Docker Swarm VPC"
+    comment: "{{ nat_comment }}"
   notify: Save iptables
 
-- name: Allow forward from swarm
+- name: Allow forward from VPC
   ansible.builtin.iptables:
     chain: FORWARD
-    source: 192.168.10.0/24
+    source: "{{ vpc_cidr }}"
     jump: ACCEPT
+    comment: "Forward from VPC"
+  notify: Save iptables
 
-- name: Allow established back
+- name: Allow established connections back to VPC
   ansible.builtin.iptables:
     chain: FORWARD
-    destination: 192.168.10.0/24
+    destination: "{{ vpc_cidr }}"
     ctstate: ESTABLISHED,RELATED
     jump: ACCEPT
+    comment: "Established back to VPC"
+  notify: Save iptables
+
+- name: Flush handlers to persist iptables immediately
+  ansible.builtin.meta: flush_handlers

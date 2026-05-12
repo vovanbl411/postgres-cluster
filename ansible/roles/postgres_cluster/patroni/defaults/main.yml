@@ -1,0 +1,47 @@
+---
+postgres_version: "17"
+
+# Patroni identity
+patroni_scope: "postgres-cluster"
+
+# REST API
+patroni_restapi_listen: "0.0.0.0:8008"
+patroni_restapi_connect_address: "{{ ansible_host }}:8008"
+
+# Consul DCS
+patroni_consul_host: "127.0.0.1"
+patroni_consul_port: 8500
+
+# PostgreSQL paths
+patroni_postgresql_data_dir: "/var/lib/postgresql/{{ postgres_version }}/main"
+patroni_postgresql_bin_dir: "/usr/lib/postgresql/{{ postgres_version }}/bin"
+
+# DCS timing
+patroni_ttl: 30
+patroni_loop_wait: 10
+patroni_retry_timeout: 10
+patroni_maximum_lag_on_failover: 1048576
+
+# PostgreSQL parameters
+patroni_postgresql_parameters:
+  max_connections: 100
+  max_wal_senders: 10
+  max_replication_slots: 10
+
+# Network for pg_hba (TODO: vault for passwords)
+patroni_pg_hba_network: "192.168.10.0/24"
+replication_password: "password"
+superuser_password: "password"
+
+# pg_hba rules
+patroni_pg_hba_rules:
+  - "local all all peer"
+  - "host all all 127.0.0.1/32 md5"
+  - "host all all ::1/128 md5"
+  - "host replication replicator {{ patroni_pg_hba_network }} md5"
+  - "host all all {{ patroni_pg_hba_network }} md5"
+
+# Firewall
+patroni_firewall_ports:
+  - { port: 5432, proto: tcp, comment: "PostgreSQL" }
+  - { port: 8008, proto: tcp, comment: "Patroni REST API" }

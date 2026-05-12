@@ -1,0 +1,45 @@
+vrrp_script check_haproxy {
+    script "{{ keepalived_script_check_haproxy.script }}"
+    interval {{ keepalived_script_check_haproxy.interval }}
+    weight {{ keepalived_script_check_haproxy.weight }}
+    user root
+}
+
+vrrp_script check_patroni_leader {
+    script "{{ keepalived_script_check_patroni.script }}"
+    interval {{ keepalived_script_check_patroni.interval }}
+    weight {{ keepalived_script_check_patroni.weight }}
+    user root
+}
+
+vrrp_instance VI_1 {
+    state BACKUP
+    interface {{ keepalived_interface }}
+    virtual_router_id {{ keepalived_vrid }}
+    priority {{ keepalived_priority[inventory_hostname] }}
+
+    advert_int {{ keepalived_advert_int }}
+
+    unicast_src_ip {{ ansible_host }}
+    unicast_peer {
+{% for host in groups['postgres_nodes'] %}
+{% if hostvars[host]['ansible_host'] != ansible_host %}
+        {{ hostvars[host]['ansible_host'] }}
+{% endif %}
+{% endfor %}
+    }
+
+    authentication {
+        auth_type {{ keepalived_auth_type }}
+        auth_pass {{ keepalived_auth_pass }}
+    }
+
+    virtual_ipaddress {
+        {{ keepalived_vip }}/32
+    }
+
+    track_script {
+        check_haproxy
+        check_patroni_leader
+    }
+}

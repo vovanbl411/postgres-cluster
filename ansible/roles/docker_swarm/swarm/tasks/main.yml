@@ -1,0 +1,24 @@
+---
+- name: Install Docker
+  ansible.builtin.import_tasks: install_docker.yml
+
+- name: Configure Docker daemon
+  ansible.builtin.template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart docker
+
+- name: Initialize Swarm manager
+  ansible.builtin.import_tasks: init_swarm.yml
+  when: inventory_hostname == groups['swarm_nodes'][0]
+
+- name: Join Swarm workers
+  ansible.builtin.import_tasks: join.yml
+  when: inventory_hostname != groups['swarm_nodes'][0]
+
+- name: Create overlay networks
+  ansible.builtin.import_tasks: network.yml
+  when: inventory_hostname == groups['swarm_nodes'][0]

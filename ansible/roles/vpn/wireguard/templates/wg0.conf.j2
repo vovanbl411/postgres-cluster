@@ -5,8 +5,8 @@ PrivateKey = {{ wg_private_key }}
 
 {% if wg_peers[inventory_hostname].is_hub | default(false) %}
 # Hub — NAT для трафика из туннеля
-PostUp = iptables -t nat -A POSTROUTING -s 10.200.0.0/24 -o eth1 -j MASQUERADE
-PostDown = iptables -t nat -D POSTROUTING -s 10.200.0.0/24 -o eth1 -j MASQUERADE
+PostUp = iptables -t nat -A POSTROUTING -s 10.200.0.0/24 -o {{ wg_nat_interface }} -j MASQUERADE
+PostDown = iptables -t nat -D POSTROUTING -s 10.200.0.0/24 -o {{ wg_nat_interface }} -j MASQUERADE
 {% else %}
 # Spoke — NAT исходящего трафика
 PostUp = iptables -t nat -A POSTROUTING -o {{ wg_interface }} -j MASQUERADE
@@ -15,14 +15,21 @@ PostDown = iptables -t nat -D POSTROUTING -o {{ wg_interface }} -j MASQUERADE
 
 {% for peer_name, peer in wg_peers.items() %}
 {% if peer_name != inventory_hostname %}
-{% set peer_pubkey = lookup('file', wg_keys_dir ~ '/' ~ peer_name ~ '.pub', errors='ignore') | default('') %}
+{% set peer_pubkey = lookup('file', wg_keys_dir ~ '/' ~ peer_name ~ '.pub', errors='ignore') | default('', true) %}
 {% if peer_pubkey | length > 0 %}
+{% if wg_peers[inventory_hostname].is_hub | default(false) %}
+# Hub peer
 [Peer]
 # {{ peer_name }}
 PublicKey = {{ peer_pubkey }}
 AllowedIPs = {{ peer.tunnel_ip }}/32
-{% if not (wg_peers[inventory_hostname].is_hub | default(false)) and peer.is_hub | default(false) %}
-Endpoint = {{ peer.endpoint_host }}:{{ wg_port }}
+{% elif peer.is_hub | default(false) %}
+# Spoke peer to hub
+[Peer]
+# {{ peer_name }}
+PublicKey = {{ peer_pubkey }}
+AllowedIPs = 10.200.0.0/24
+Endpoint = {{ hostvars[groups['bastion'][0]]['ansible_host'] }}:{{ wg_port }}
 PersistentKeepalive = 25
 {% endif %}
 {% endif %}

@@ -1,0 +1,50 @@
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    chroot {{ haproxy_chroot }}
+    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+    stats timeout 30s
+    user {{ haproxy_user }}
+    group {{ haproxy_group }}
+    daemon
+
+defaults
+    log     global
+    mode    tcp
+    option  tcplog
+    option  dontlognull
+    timeout connect {{ haproxy_timeout_connect }}
+    timeout client  {{ haproxy_timeout_client }}
+    timeout server  {{ haproxy_timeout_server }}
+
+listen stats
+    bind {{ haproxy_vip }}:{{ haproxy_port_stats }}
+    mode http
+    stats enable
+    stats uri /
+
+frontend postgres_write
+    bind {{ haproxy_vip }}:{{ haproxy_port_write }}
+    default_backend pg_master
+
+frontend postgres_read
+    bind {{ haproxy_vip }}:{{ haproxy_port_read }}
+    default_backend pg_replicas
+
+backend pg_master
+    mode tcp
+    option httpchk GET /master
+    http-check expect status 200
+    default-server inter {{ haproxy_check_inter }} fall {{ haproxy_check_fall }} rise {{ haproxy_check_rise }} on-marked-down shutdown-sessions
+{% for host in groups['postgres_nodes'] %}
+    server {{ host }} {{ hostvars[host]['ansible_host'] }}:5432 check port 8008
+{% endfor %}
+
+backend pg_replicas
+    mode tcp
+    option httpchk GET /replica
+    http-check expect status 200
+    default-server inter {{ haproxy_check_inter }} fall {{ haproxy_check_fall }} rise {{ haproxy_check_rise }} on-marked-down shutdown-sessions
+{% for host in groups['postgres_nodes'] %}
+    server {{ host }} {{ hostvars[host]['ansible_host'] }}:5432 check port 8008
+{% endfor %}

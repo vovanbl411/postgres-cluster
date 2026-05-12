@@ -1,0 +1,28 @@
+---
+# VIP и порты
+haproxy_vip: "192.168.10.100"
+
+haproxy_port_write: 5432
+haproxy_port_read: 5433
+haproxy_port_stats: 7000
+
+# HAProxy runtime
+haproxy_user: "haproxy"
+haproxy_group: "haproxy"
+haproxy_chroot: "/var/lib/haproxy"
+
+# Timeouts (ms)
+haproxy_timeout_connect: 5000
+haproxy_timeout_client: 50000
+haproxy_timeout_server: 50000
+
+# Health check
+haproxy_check_inter: "5s"
+haproxy_check_fall: 3
+haproxy_check_rise: 2
+
+# Firewall
+haproxy_firewall_ports:
+  - { port: "{{ haproxy_port_write }}", proto: tcp, comment: "HAProxy PostgreSQL RW" }
+  - { port: "{{ haproxy_port_read }}", proto: tcp, comment: "HAProxy PostgreSQL RO" }
+  - { port: "{{ haproxy_port_stats }}", proto: tcp, comment: "HAProxy Stats" }

@@ -6,6 +6,12 @@ vmagent_remote_write_url: "http://{{ monitoring_server_host }}:{{ monitoring_ser
 scrape_interval: "15s"
 monitoring_network_cidr: "10.0.0.0/24"
 
+# Exporter ports (used by vmagent scrape config and firewall rules)
+node_exporter_port: 9100
+vmagent_port: 8429
+wireguard_exporter_port: 9586
+postgres_exporter_port: 9187
+
 # Агенты: глобальные defaults
 node_exporter_enabled: true
 vmagent_enabled: true
@@ -17,12 +23,23 @@ wg_peers:
   bastion-host:
     tunnel_ip: "10.200.0.1"
     is_hub: true
-    endpoint_host: "77.232.135.78"  # белый IP бастиона
   monitoring-0:
     tunnel_ip: "10.200.0.3"
     is_hub: false
   controller-0:
     tunnel_ip: "10.200.0.2"
+    is_hub: false
+  pg-node-1:
+    tunnel_ip: "10.200.0.4"
+    is_hub: false
+  pg-node-2:
+    tunnel_ip: "10.200.0.5"
+    is_hub: false
+  pg-node-3:
+    tunnel_ip: "10.200.0.6"
+    is_hub: false
+  gitlab-runner-1:        # ← новый spoke
+    tunnel_ip: "10.200.0.10"
     is_hub: false
 
 # Директория для ключей на контроллере

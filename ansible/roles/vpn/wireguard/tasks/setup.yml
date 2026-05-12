@@ -1,0 +1,21 @@
+---
+- name: Check if WireGuard is installed
+  ansible.builtin.command: which wg
+  register: wg_check
+  changed_when: false
+  ignore_errors: true
+
+- name: Install WireGuard
+  ansible.builtin.apt:
+    name: wireguard
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+  when: wg_check.rc != 0
+
+- name: Enable IP forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    state: present
+    reload: true

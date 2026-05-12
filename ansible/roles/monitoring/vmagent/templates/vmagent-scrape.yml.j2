@@ -8,14 +8,24 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:{{ node_exporter_port }}']
 
+{% if wireguard_exporter_enabled | default(false) | bool %}
   - job_name: 'wireguard'
     static_configs:
       - targets: ['localhost:{{ wireguard_exporter_port }}']
+{% endif %}
 
-{% if monitoring_agent_install_postgres_exporter | default(false) | bool %}
+{% if postgres_exporter_enabled | default(false) | bool %}
   - job_name: 'postgres'
     static_configs:
       - targets: ['localhost:{{ postgres_exporter_port }}']
         labels:
           instance: "{{ inventory_hostname }}"
+{% endif %}
+
+{% if vmagent_extra_scrape_targets | length > 0 %}
+{% for target in vmagent_extra_scrape_targets %}
+  - job_name: '{{ target.job_name }}'
+    static_configs:
+      - targets: {{ target.targets | to_json }}
+{% endfor %}
 {% endif %}

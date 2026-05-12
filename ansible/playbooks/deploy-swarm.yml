@@ -1,18 +1,9 @@
 ---
-- name: Setup bastion NAT
-  hosts: bastion
-  become: true
-  roles:
-    - bastion_nat
-
-- name: Setup nodes gateway
-  hosts: swarm_nodes
-  become: true
-  roles:
-    - node_gateway
-
 - name: Deploy Docker Swarm
   hosts: swarm_nodes
   become: true
+  gather_facts: true
+
   roles:
-    - docker_swarm
+    - role: docker_swarm/swarm
+      tags: [swarm, docker]

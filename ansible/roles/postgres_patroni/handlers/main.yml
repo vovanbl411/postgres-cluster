@@ -1,6 +1,0 @@
----
-- name: restart patroni
-  systemd:
-    name: patroni
-    state: restarted
-    daemon_reload: yes

@@ -1,3 +1,0 @@
----
-- name: Save iptables
-  ansible.builtin.command: netfilter-persistent save

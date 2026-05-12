@@ -1,0 +1,13 @@
+---
+- name: Check if already in Swarm
+  ansible.builtin.command: docker info --format '{{ '{{' }} .Swarm.LocalNodeState {{ '}}' }}'
+  register: swarm_status
+  changed_when: false
+  failed_when: false
+
+- name: Join Swarm as worker
+  ansible.builtin.command: >
+    docker swarm join
+    --token {{ hostvars[groups['swarm_nodes'][0]]['swarm_worker_token'] }}
+    {{ docker_swarm_manager_ip }}:{{ docker_swarm_port }}
+  when: swarm_status.stdout != "active"

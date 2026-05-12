@@ -1,0 +1,59 @@
+---
+- name: Disable systemd-resolved stub
+  ansible.builtin.systemd:
+    name: systemd-resolved
+    state: stopped
+    enabled: false
+
+- name: Configure static DNS
+  ansible.builtin.copy:
+    content: "{{ vpc_dns_servers }}"
+    dest: /etc/resolv.conf
+    mode: '0644'
+    force: true
+
+# --- Cleanup: remove broken/non-working configs ---
+- name: Remove legacy interfaces.d config
+  ansible.builtin.file:
+    path: /etc/network/interfaces.d/swarm-route
+    state: absent
+
+- name: Remove broken systemd-networkd drop-in
+  ansible.builtin.file:
+    path: "/etc/systemd/network/10-{{ vpc_interface }}.network.d"
+    state: absent
+
+# --- Systemd unit for persistent route ---
+- name: Create systemd unit for default VPC route
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/ansible-vpc-route.service
+    content: |
+      [Unit]
+      Description=Default route via VPC gateway (Ansible managed)
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/sbin/ip route replace default via {{ vpc_gateway_ip }} dev {{ vpc_interface }}
+      ExecStop=/sbin/ip route del default via {{ vpc_gateway_ip }} dev {{ vpc_interface }} || true
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Enable and start VPC route service
+  ansible.builtin.systemd:
+    name: ansible-vpc-route
+    enabled: true
+    state: started
+
+- name: Apply default route immediately
+  ansible.builtin.command: >
+    /sbin/ip route replace default via {{ vpc_gateway_ip }} dev {{ vpc_interface }}
+  register: route_result
+  changed_when: route_result.rc == 0

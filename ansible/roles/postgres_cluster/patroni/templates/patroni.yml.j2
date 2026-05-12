@@ -1,0 +1,52 @@
+scope: {{ patroni_scope }}
+name: {{ inventory_hostname }}
+
+restapi:
+  listen: {{ patroni_restapi_listen }}
+  connect_address: {{ patroni_restapi_connect_address }}
+
+consul:
+  host: {{ patroni_consul_host }}
+  port: {{ patroni_consul_port }}
+
+bootstrap:
+  dcs:
+    ttl: {{ patroni_ttl }}
+    loop_wait: {{ patroni_loop_wait }}
+    retry_timeout: {{ patroni_retry_timeout }}
+    maximum_lag_on_failover: {{ patroni_maximum_lag_on_failover }}
+    postgresql:
+      use_pg_rewind: true
+      parameters:
+{% for key, value in patroni_postgresql_parameters.items() %}
+        {{ key }}: {{ value }}
+{% endfor %}
+
+  initdb:
+    - encoding: UTF8
+    - data-checksums
+
+postgresql:
+  listen: {{ ansible_host }}:5432
+  connect_address: {{ ansible_host }}:5432
+  data_dir: {{ patroni_postgresql_data_dir }}
+  bin_dir: {{ patroni_postgresql_bin_dir }}
+  pgpass: /tmp/pgpass
+  authentication:
+    replication:
+      username: replicator
+      password: "{{ replication_password }}"
+    superuser:
+      username: postgres
+      password: "{{ superuser_password }}"
+  parameters:
+    unix_socket_directories: '/var/run/postgresql'
+  use_pg_rewind: true
+  pg_hba:
+{% for rule in patroni_pg_hba_rules %}
+    - {{ rule }}
+{% endfor %}
+
+tags:
+  nosync: false
+  endpoint_healthy: true

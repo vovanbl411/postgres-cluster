@@ -1,0 +1,14 @@
+[Unit]
+Description=Consul Agent
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+User=consul
+Group=consul
+ExecStart={{ consul_binary_dest }} agent -config-dir={{ consul_config_dir }}/
+ExecReload=/bin/kill --signal HUP $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

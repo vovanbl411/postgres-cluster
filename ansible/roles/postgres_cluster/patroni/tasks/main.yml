@@ -1,0 +1,75 @@
+---
+- name: Install PostgreSQL and Patroni dependencies
+  ansible.builtin.apt:
+    name:
+      - postgresql
+      - patroni
+      - python3-psycopg2
+      - python3-consul
+    state: present
+    update_cache: true
+
+- name: Stop and disable default PostgreSQL service
+  ansible.builtin.systemd:
+    name: postgresql
+    state: stopped
+    enabled: false
+
+- name: Drop default PG cluster
+  ansible.builtin.command: pg_dropcluster {{ postgres_version }} main --stop
+  register: drop_result
+  failed_when:
+    - drop_result.rc != 0
+    - "'does not exist' not in drop_result.stderr"
+  changed_when: drop_result.rc == 0
+  become: true
+
+- name: Create Patroni configuration directory
+  ansible.builtin.file:
+    path: /etc/patroni
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0750'
+
+- name: Ensure PostgreSQL data directory exists
+  ansible.builtin.file:
+    path: "{{ patroni_postgresql_data_dir }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0700'
+
+- name: Generate Patroni configuration
+  ansible.builtin.template:
+    src: patroni.yml.j2
+    dest: /etc/patroni/patroni.yml
+    owner: postgres
+    group: postgres
+    mode: '0640'
+  notify: Restart patroni
+
+- name: Ensure Patroni systemd unit is present
+  ansible.builtin.template:
+    src: patroni.service.j2
+    dest: /etc/systemd/system/patroni.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart patroni
+
+- name: Start and enable Patroni
+  ansible.builtin.systemd:
+    name: patroni
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Open Patroni and PostgreSQL ports in firewall
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: "{{ item.proto }}"
+    destination_port: "{{ item.port }}"
+    jump: ACCEPT
+    comment: "{{ item.comment }}"
+  loop: "{{ patroni_firewall_ports }}"

@@ -1,0 +1,16 @@
+---
+# Autodetect bastion private IP from inventory.
+# Works because deploy-vpn.yml uses 'hosts: all' and bastion is in inventory.
+vpc_gateway_ip: >-
+  {{
+    hostvars[groups['bastion'][0]]['bastion_private_ip']
+    | default('192.168.10.7')
+  }}
+
+# Network interface on VPC nodes
+vpc_interface: "eth1"
+
+# Static DNS for VPC nodes (systemd-resolved disabled)
+vpc_dns_servers: |
+  nameserver 8.8.8.8
+  nameserver 8.8.4.4

@@ -1,0 +1,24 @@
+datacenter = "{{ consul_datacenter }}"
+data_dir   = "{{ consul_data_dir }}"
+log_level  = "{{ consul_log_level }}"
+node_name  = "{{ inventory_hostname }}"
+
+bind_addr   = "{{ consul_bind_addr }}"
+client_addr = "{{ consul_client_addr }}"
+
+server           = true
+bootstrap_expect = {{ consul_bootstrap_expect }}
+
+retry_join = [
+{% for host in groups['postgres_nodes'] %}
+  "{{ hostvars[host]['ansible_host'] }}"{{ "," if not loop.last else "" }}
+{% endfor %}
+]
+
+ui_config {
+  enabled = {{ consul_ui_enabled | lower }}
+}
+
+connect {
+  enabled = {{ consul_connect_enabled | lower }}
+}

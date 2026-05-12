@@ -1,0 +1,33 @@
+---
+# Swarm identity
+docker_swarm_network_cidr: "192.168.10.0/24"
+docker_swarm_role: "worker"
+docker_swarm_port: 2377
+
+# Manager IP — auto-detect from first swarm_nodes host if empty
+docker_swarm_manager_ip: >-
+  {{
+    hostvars[groups['swarm_nodes'][0]]['ansible_default_ipv4']['address']
+    | default(hostvars[groups['swarm_nodes'][0]]['ansible_host'])
+  }}
+
+# Join token — populated dynamically by manager
+docker_swarm_join_token: ""
+
+# Advertise/listen address — defaults to primary IPv4
+docker_swarm_advertise_addr: "{{ ansible_default_ipv4.address | default(ansible_host) }}"
+
+# Overlay networks
+docker_swarm_overlay_networks:
+  - name: swarm-public
+    attachable: true
+  - name: swarm-private
+    attachable: false
+
+# Docker daemon options
+docker_swarm_daemon_config:
+  log-driver: "json-file"
+  log-opts:
+    max-size: "10m"
+    max-file: "3"
+  storage-driver: "overlay2"

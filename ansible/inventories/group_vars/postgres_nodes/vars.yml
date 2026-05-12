@@ -1,2 +1,5 @@
 ---
 postgres_exporter_enabled: true
+
+vmagent_remote_write_url: "http://10.200.0.3:8428/api/v1/write"
+

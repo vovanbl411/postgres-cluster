@@ -1,0 +1,26 @@
+---
+- name: Check if Swarm is already initialized
+  ansible.builtin.command: docker info --format '{{ '{{' }} .Swarm.LocalNodeState {{ '}}' }}'
+  register: swarm_status
+  changed_when: false
+  failed_when: false
+
+- name: Initialize Docker Swarm
+  ansible.builtin.command: >
+    docker swarm init
+    --advertise-addr {{ docker_swarm_advertise_addr }}
+    --listen-addr {{ docker_swarm_advertise_addr }}:{{ docker_swarm_port }}
+  when: swarm_status.stdout != "active"
+  register: swarm_init
+
+- name: Get worker join token
+  ansible.builtin.command: docker swarm join-token -q worker
+  register: worker_token_raw
+  changed_when: false
+
+- name: Publish token to all nodes
+  ansible.builtin.set_fact:
+    swarm_worker_token: "{{ worker_token_raw.stdout }}"
+  delegate_to: "{{ item }}"
+  delegate_facts: true
+  loop: "{{ groups['swarm_nodes'] }}"

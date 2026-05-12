@@ -1,4 +1,0 @@
----
-wg_keys_dir: "{{ playbook_dir }}/../.wg-keys"
-wg_interface: "wg0"
-wg_port: 51820

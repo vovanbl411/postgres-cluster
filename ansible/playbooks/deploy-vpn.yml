@@ -1,8 +1,23 @@
 ---
-- name: Setup WireGuard Tunnel
-  hosts: bastion, controllers
+- name: Setup bastion NAT
+  hosts: bastion
   become: true
-  tasks:
-    - name: Configure WireGuard on both sides
-      include_role:
-        name: wireguard
+  roles:
+    - role: vpn/bastion_nat
+      tags: [vpn, nat]
+
+- name: Setup routes for all VPC nodes
+  hosts: all
+  become: true
+  roles:
+    - role: vpn/routes
+      tags: [vpn, routes]
+      when: vpc_node | default(false) | bool
+
+- name: Setup WireGuard
+  hosts: all
+  become: true
+  roles:
+    - role: vpn/wireguard
+      tags: [vpn, wireguard]
+      when: inventory_hostname in wg_peers
