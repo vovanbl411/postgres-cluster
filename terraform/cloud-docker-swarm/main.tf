@@ -59,6 +59,7 @@ module "swarm_nodes" {
 
     local_network {
       id = twc_vpc.cluster_net.id
+      ip = "192.168.10.7"
     }
   }
 
@@ -68,9 +69,10 @@ module "swarm_nodes" {
   }
 
   resource "local_file" "ansible_inventory" {
-    content         = templatefile("${path.module}/../templates/inventory_swarm.tmpl", {
-      swarm_ips        = module.swarm_nodes.private_ips
-      bastion_ip       = twc_server_ip.connector_ip.ip
+    content              = templatefile("${path.module}/../templates/inventory_swarm.tmpl", {
+      swarm_ips          = module.swarm_nodes.private_ips
+      bastion_ip         = twc_server_ip.connector_ip.ip
+      bastion_private_ip = "192.168.10.7"
     })
 
     filename        = "${path.module}/../../ansible/inventories/swarm.ini"

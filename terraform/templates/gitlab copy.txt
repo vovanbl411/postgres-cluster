@@ -1,0 +1,18 @@
+[all:vars]
+ansible_user=vladimir
+ansible_ssh_private_key_file=~/.ssh/id_ed25519
+ansible_python_interpreter=/usr/bin/python3
+
+[gitlab_master]
+%{ for name, config in nodes ~}
+%{ if config.role == "gitlab_master" ~}
+${name} ansible_host=${config.ip}
+%{ endif ~}
+%{ endfor ~}
+
+[gitlab_runner]
+%{ for name, config in nodes ~}
+%{ if config.role == "gitlab_runner" ~}
+${name} ansible_host=${config.ip}
+%{ endif ~}
+%{ endfor ~}

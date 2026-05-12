@@ -113,9 +113,10 @@ resource "tls_private_key" "wg_local_key" {
   }
 
   resource "local_file" "ansible_inventory" {
-    content         = templatefile("${path.module}/../templates/inventory_cloud.tmpl", {
-      pg_ips        = module.postgres_nodes.private_ips
-      bastion_ip    = twc_server_ip.connector_ip.ip
+    content              = templatefile("${path.module}/../templates/inventory_cloud.tmpl", {
+      pg_ips             = module.postgres_nodes.private_ips
+      bastion_ip         = twc_server_ip.connector_ip.ip
+      bastion_private_ip = twc_server.connector.local_ip
     })
 
     filename        = "${path.module}/../../ansible/inventories/cloud.ini"

@@ -3,7 +3,6 @@ bastion-host ansible_host=${bastion_ip}
 
 [bastion:vars]
 ansible_user=root
-bastion_private_ip=${bastion_private_ip}
 
 [swarm_nodes]
 %{ for index, ip in swarm_ips ~}
@@ -13,4 +12,3 @@ swarm-node-${index + 1} ansible_host=${ip}
 [swarm_nodes:vars]
 ansible_user=root
 ansible_ssh_common_args='-o ProxyJump=root@${bastion_ip}'
-vpc_node=true

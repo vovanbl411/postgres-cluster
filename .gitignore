@@ -21,6 +21,7 @@ ansible/inventories/*.ini
 **/inventory.yml
 **/inventory.yaml
 ansible/ansible.log
+ansible/.wg-keys
 
 # General
 .DS_Store

@@ -4,6 +4,8 @@ bastion-host ansible_host=${bastion_ip}
 [bastion:vars]
 ansible_user=root
 wg_tunnel_ip=10.200.0.1
+wg_endpoint_host=${bastion_ip}
+bastion_private_ip=${bastion_private_ip}
 
 [postgres_nodes]
 %{ for index, ip in pg_ips ~}
@@ -13,3 +15,4 @@ pg-node-${index + 1} ansible_host=${ip}
 [postgres_nodes:vars]
 ansible_user=root
 ansible_ssh_common_args='-o ProxyJump=root@${bastion_ip}'
+vpc_node=true
