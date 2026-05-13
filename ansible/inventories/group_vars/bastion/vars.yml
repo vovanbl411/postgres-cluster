@@ -1,7 +1,5 @@
 ---
 # Бастион шлёт метрики через VPN туннель
 # vmagent_remote_write_url: "http://10.0.0.30:8428/api/v1/write"
-wireguard_exporter_enabled: true
-wg_tunnel_ip: 10.200.0.1
-
 vmagent_remote_write_url: "http://10.200.0.3:8428/api/v1/write"
+wireguard_exporter_enabled: true

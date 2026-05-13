@@ -1,0 +1,15 @@
+---
+gitlab_version: "17.11.0-ce.0"
+gitlab_external_url: "http://{{ ansible_default_ipv4.address }}"
+
+gitlab_postgresql_shared_buffers: "256MB"
+gitlab_sidekiq_max_concurrency: 10
+gitlab_prometheus_enabled: false
+gitlab_registry_enabled: false
+
+gitlab_http_port: 80
+gitlab_https_port: 443
+gitlab_ssh_port: 22
+
+# Куда на контроллере сохранять токен для раннера
+gitlab_token_cache_dir: "{{ playbook_dir }}/../.gitlab-tokens"

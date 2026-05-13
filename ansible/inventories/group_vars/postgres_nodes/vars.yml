@@ -3,3 +3,6 @@ postgres_exporter_enabled: true
 
 vmagent_remote_write_url: "http://10.200.0.3:8428/api/v1/write"
 
+patroni_replication_password: "{{ vault_patroni_replication_password }}"
+patroni_superuser_password: "{{ vault_patroni_superuser_password }}"
+patroni_rewind_password: "{{ vault_patroni_rewind_password }}"

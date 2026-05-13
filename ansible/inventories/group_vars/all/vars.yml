@@ -1,24 +1,24 @@
 ---
-# Глобальные monitoring настройки
-monitoring_server_host: "10.0.0.30"
-monitoring_server_port: 8428
-vmagent_remote_write_url: "http://{{ monitoring_server_host }}:{{ monitoring_server_port }}/api/v1/write"
-scrape_interval: "15s"
+# Monitoring network (для scrape config и firewall)
 monitoring_network_cidr: "10.0.0.0/24"
+scrape_interval: "15s"
 
-# Exporter ports (used by vmagent scrape config and firewall rules)
+# Exporter ports (используются vmagent scrape config + firewall)
 node_exporter_port: 9100
 vmagent_port: 8429
 wireguard_exporter_port: 9586
 postgres_exporter_port: 9187
 
-# Агенты: глобальные defaults
+# Активация экспортёров (если роли используют эти флаги)
 node_exporter_enabled: true
 vmagent_enabled: true
 wireguard_exporter_enabled: false
 postgres_exporter_enabled: false
 
-# WireGuard mesh registry
+# WireGuard
+wg_bastion_endpoint: ""
+wg_keys_dir: "{{ playbook_dir }}/../.wg-keys"
+
 wg_peers:
   bastion-host:
     tunnel_ip: "10.200.0.1"
@@ -27,7 +27,13 @@ wg_peers:
     tunnel_ip: "10.200.0.3"
     is_hub: false
   controller-0:
-    tunnel_ip: "10.200.0.2"
+    tunnel_ip: "10.200.0.10"
+    is_hub: false
+  worker-0:
+    tunnel_ip: "10.200.0.11"
+    is_hub: false
+  worker-1:
+    tunnel_ip: "10.200.0.12"
     is_hub: false
   pg-node-1:
     tunnel_ip: "10.200.0.4"
@@ -38,9 +44,6 @@ wg_peers:
   pg-node-3:
     tunnel_ip: "10.200.0.6"
     is_hub: false
-  gitlab-runner-1:        # ← новый spoke
-    tunnel_ip: "10.200.0.10"
+  gitlab-runner-1:
+    tunnel_ip: "10.200.0.20"
     is_hub: false
-
-# Директория для ключей на контроллере
-wg_keys_dir: "{{ playbook_dir }}/../.wg-keys"

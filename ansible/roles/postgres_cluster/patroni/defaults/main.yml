@@ -30,8 +30,9 @@ patroni_postgresql_parameters:
 
 # Network for pg_hba (TODO: vault for passwords)
 patroni_pg_hba_network: "192.168.10.0/24"
-replication_password: "password"
-superuser_password: "password"
+patroni_replication_password: "default-insecure"
+patroni_superuser_password: "default-insecure"
+patroni_rewind_password: "default-insecure"
 
 # pg_hba rules
 patroni_pg_hba_rules:

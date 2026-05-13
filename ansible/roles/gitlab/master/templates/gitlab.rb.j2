@@ -1,0 +1,20 @@
+# Минимальный конфиг GitLab
+external_url '{{ gitlab_external_url }}'
+
+# Отключаем лишнее для экономии RAM
+gitlab_rails['gitlab_default_projects_features_issues'] = false
+gitlab_rails['gitlab_default_projects_features_wiki'] = false
+gitlab_rails['gitlab_default_projects_features_snippets'] = false
+
+# PostgreSQL — встроенный, но с ограничениями
+postgresql['shared_buffers'] = "{{ gitlab_postgresql_shared_buffers }}"
+
+# Sidekiq workers
+sidekiq['max_concurrency'] = {{ gitlab_sidekiq_max_concurrency }}
+
+# Prometheus — отключаем, если не нужен мониторинг самого GitLab
+# (есть VictoriaMetrics)
+prometheus_monitoring['enable'] = {{ gitlab_prometheus_enabled | lower }}
+
+# Registry — отключаем, если не нужен
+gitlab_rails['registry_enabled'] = {{ gitlab_registry_enabled | lower }}

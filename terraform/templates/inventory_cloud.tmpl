@@ -16,3 +16,6 @@ pg-node-${index + 1} ansible_host=${ip}
 ansible_user=root
 ansible_ssh_common_args='-o ProxyJump=root@${bastion_ip}'
 vpc_node=true
+
+[all:vars]
+wg_bastion_endpoint=${bastion_ip}

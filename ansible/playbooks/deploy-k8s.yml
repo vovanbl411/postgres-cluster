@@ -2,21 +2,37 @@
 - name: Prepare all Kubernetes nodes
   hosts: k8s
   become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Ensure base OS configuration
+      ansible.builtin.import_role:
+        name: common
+
   roles:
-    - k8s_prep
-    - container_runtime
-    - k8s_install
+    - role: kubernetes/prep
+      tags: [k8s, prep]
+    - role: kubernetes/container_runtime
+      tags: [k8s, container_runtime]
+    - role: kubernetes/install
+      tags: [k8s, install]
 
 - name: Initialize Kubernetes Control Plane
   hosts: controllers
   become: true
+  gather_facts: true
+
   roles:
-    - k8s_control_plane
-    - k8s_cni
+    - role: kubernetes/control_plane
+      tags: [k8s, control_plane]
+    - role: kubernetes/cni
+      tags: [k8s, cni]
 
 - name: Join Worker Nodes
   hosts: workers
   become: true
+  gather_facts: true
+
   roles:
-    - k8s_workers
-    - vpn_routes_worker
+    - role: kubernetes/workers
+      tags: [k8s, workers]

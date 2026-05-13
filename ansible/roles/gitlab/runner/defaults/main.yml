@@ -1,0 +1,7 @@
+---
+gitlab_master_url: ""
+gitlab_runner_executor: "shell"
+gitlab_runner_tags: "docker,swarm"
+
+# Должен совпадать с master
+gitlab_token_cache_dir: "{{ playbook_dir }}/../.gitlab-tokens"

@@ -1,0 +1,1 @@
+gitlab_master_url: "http://{{ hostvars[groups['gitlab_master'][0]]['ansible_default_ipv4']['address'] }}"

@@ -1,0 +1,2 @@
+---
+k8s_join_command_file: /etc/kubernetes/join-command.sh

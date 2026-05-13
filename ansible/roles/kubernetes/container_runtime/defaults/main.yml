@@ -1,0 +1,4 @@
+---
+containerd_service_name: containerd
+containerd_config_dir: /etc/containerd
+containerd_config_file: "{{ containerd_config_dir }}/config.toml"

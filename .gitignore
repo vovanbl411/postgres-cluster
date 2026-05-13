@@ -22,6 +22,7 @@ ansible/inventories/*.ini
 **/inventory.yaml
 ansible/ansible.log
 ansible/.wg-keys
+ansible/.gitlab-tokens
 
 # General
 .DS_Store

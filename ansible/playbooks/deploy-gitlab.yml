@@ -1,12 +1,28 @@
 ---
-- name: Setup GitLab Master
+- name: Deploy GitLab Master
   hosts: gitlab_master
   become: true
-  roles:
-    - gitlab_master
+  gather_facts: true
 
-- name: Setup GitLab Runner
+  pre_tasks:
+    - name: Ensure base OS configuration
+      ansible.builtin.import_role:
+        name: common
+
+  roles:
+    - role: gitlab/master
+      tags: [gitlab, master]
+
+- name: Deploy GitLab Runner
   hosts: gitlab_runner
   become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Ensure base OS configuration
+      ansible.builtin.import_role:
+        name: common
+
   roles:
-    - gitlab_runner
+    - role: gitlab/runner
+      tags: [gitlab, runner]

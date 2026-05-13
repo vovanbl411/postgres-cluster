@@ -1,0 +1,27 @@
+---
+- name: Install containerd
+  ansible.builtin.apt:
+    name: containerd
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Ensure containerd config directory exists
+  ansible.builtin.file:
+    path: "{{ containerd_config_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Configure containerd
+  ansible.builtin.template:
+    src: config.toml.j2
+    dest: "{{ containerd_config_file }}"
+    mode: '0644'
+  notify: Restart containerd
+
+- name: Ensure containerd is started and enabled
+  ansible.builtin.systemd:
+    name: "{{ containerd_service_name }}"
+    state: started
+    enabled: true
+    daemon_reload: true

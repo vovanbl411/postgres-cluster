@@ -1,0 +1,13 @@
+---
+# Должна совпадать с kubernetes/install
+k8s_version: "1.35.3"
+
+k8s_pod_subnet: "10.244.0.0/16"
+k8s_service_subnet: "10.96.0.0/12"
+k8s_extra_cert_sans: []
+
+# Пользователь, под которым разместится kubeconfig
+k8s_admin_user: "{{ ansible_env.SUDO_USER | default(ansible_user, true) | default(ansible_user_id) }}"
+
+k8s_config_dir: /etc/kubernetes
+k8s_kubeadm_config: "{{ k8s_config_dir }}/kubeadm-config.yaml"

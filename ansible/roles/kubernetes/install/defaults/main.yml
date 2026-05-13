@@ -1,0 +1,14 @@
+---
+k8s_version: "1.35.3"
+k8s_bin_dir: "/usr/local/bin"
+k8s_cni_dir: "/opt/cni/bin"
+
+k8s_cni_plugins_version: "1.5.0"
+k8s_crictl_version: "1.30.0"
+
+k8s_binaries:
+  - kubeadm
+  - kubelet
+  - kubectl
+
+k8s_controller_cache_dir: "/tmp/k8s-{{ k8s_version }}"

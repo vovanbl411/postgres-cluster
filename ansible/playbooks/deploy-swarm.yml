@@ -4,6 +4,11 @@
   become: true
   gather_facts: true
 
+  pre_tasks:
+    - name: Ensure base OS configuration
+      ansible.builtin.import_role:
+        name: common
+
   roles:
     - role: docker_swarm/swarm
       tags: [swarm, docker]

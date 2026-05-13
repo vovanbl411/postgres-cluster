@@ -100,6 +100,7 @@ resource "tls_private_key" "wg_local_key" {
 
     local_network {
       id = twc_vpc.cluster_net.id
+      ip = "192.168.10.7"
     }
 
     cloud_init = templatefile("${path.module}/../templates/setup_cloud.sh.tpl", {
@@ -116,7 +117,7 @@ resource "tls_private_key" "wg_local_key" {
     content              = templatefile("${path.module}/../templates/inventory_cloud.tmpl", {
       pg_ips             = module.postgres_nodes.private_ips
       bastion_ip         = twc_server_ip.connector_ip.ip
-      bastion_private_ip = twc_server.connector.local_ip
+      bastion_private_ip = "192.168.10.7"
     })
 
     filename        = "${path.module}/../../ansible/inventories/cloud.ini"

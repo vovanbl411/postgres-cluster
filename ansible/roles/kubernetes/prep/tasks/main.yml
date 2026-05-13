@@ -1,0 +1,60 @@
+---
+- name: Ensure CA certificates are up to date
+  ansible.builtin.apt:
+    name: ca-certificates
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Disable SWAP
+  ansible.builtin.command:
+    cmd: "{{ item }}"
+  loop:
+    - swapoff -a
+    - sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+  when: ansible_swaptotal_mb > 0
+  changed_when: true
+
+- name: Load kernel modules
+  ansible.builtin.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ k8s_kernel_modules }}"
+
+- name: Persist kernel modules
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: |
+      {% for module in k8s_kernel_modules %}
+      {{ module }}
+      {% endfor %}
+    mode: '0644'
+
+- name: Configure sysctl for Kubernetes networking
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.d/k8s.conf
+    reload: true
+  loop: "{{ k8s_sysctl_params | dict2items }}"
+
+- name: Install base dependencies
+  ansible.builtin.apt:
+    name: "{{ k8s_base_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install Python dependencies for k8s modules
+  ansible.builtin.apt:
+    name: "{{ k8s_python_packages }}"
+    state: present
+
+- name: Mount BPF filesystem
+  ansible.posix.mount:
+    path: /sys/fs/bpf
+    src: bpffs
+    fstype: bpf
+    state: mounted
+  when: k8s_mount_bpf

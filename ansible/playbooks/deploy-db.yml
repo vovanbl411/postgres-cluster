@@ -4,15 +4,17 @@
   become: true
   gather_facts: true
 
+  pre_tasks:
+    - name: Ensure base OS configuration
+      ansible.builtin.import_role:
+        name: common
+
   roles:
     - role: postgres_cluster/consul
       tags: [postgres, consul]
-
     - role: postgres_cluster/patroni
       tags: [postgres, patroni]
-
     - role: postgres_cluster/haproxy
       tags: [postgres, haproxy]
-
     - role: postgres_cluster/keepalived
       tags: [postgres, keepalived]

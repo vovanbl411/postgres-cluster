@@ -1,0 +1,93 @@
+---
+- name: Ensure binary directory exists
+  ansible.builtin.file:
+    path: "{{ k8s_bin_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Ensure CNI directory exists
+  ansible.builtin.file:
+    path: "{{ k8s_cni_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Ensure controller cache directory exists
+  ansible.builtin.file:
+    path: "{{ k8s_controller_cache_dir }}"
+    state: directory
+    mode: '0755'
+  delegate_to: localhost
+  become: false
+
+- name: Download Kubernetes binaries on controller
+  ansible.builtin.get_url:
+    url: "https://dl.k8s.io/release/v{{ k8s_version }}/bin/linux/amd64/{{ item }}"
+    dest: "{{ k8s_controller_cache_dir }}/{{ item }}"
+    mode: '0644'
+  delegate_to: localhost
+  become: false
+  loop: "{{ k8s_binaries }}"
+
+- name: Install Kubernetes binaries on target
+  ansible.builtin.copy:
+    src: "{{ k8s_controller_cache_dir }}/{{ item }}"
+    dest: "{{ k8s_bin_dir }}/{{ item }}"
+    mode: '0755'
+    remote_src: false
+  loop: "{{ k8s_binaries }}"
+
+- name: Download CNI plugins on controller
+  ansible.builtin.get_url:
+    url: "https://github.com/containernetworking/plugins/releases/download/v{{ k8s_cni_plugins_version }}/cni-plugins-linux-amd64-v{{ k8s_cni_plugins_version }}.tgz"
+    dest: "{{ k8s_controller_cache_dir }}/cni-plugins.tgz"
+    mode: '0644'
+  delegate_to: localhost
+  become: false
+
+- name: Install CNI plugins on target
+  ansible.builtin.unarchive:
+    src: "{{ k8s_controller_cache_dir }}/cni-plugins.tgz"
+    dest: "{{ k8s_cni_dir }}"
+    remote_src: false
+    owner: root
+    group: root
+
+- name: Download crictl on controller
+  ansible.builtin.get_url:
+    url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/v{{ k8s_crictl_version }}/crictl-v{{ k8s_crictl_version }}-linux-amd64.tar.gz"
+    dest: "{{ k8s_controller_cache_dir }}/crictl.tar.gz"
+    mode: '0644'
+  delegate_to: localhost
+  become: false
+
+- name: Install crictl on target
+  ansible.builtin.unarchive:
+    src: "{{ k8s_controller_cache_dir }}/crictl.tar.gz"
+    dest: "{{ k8s_bin_dir }}"
+    remote_src: false
+
+- name: Deploy kubelet service unit
+  ansible.builtin.template:
+    src: kubelet.service.j2
+    dest: /etc/systemd/system/kubelet.service
+    mode: '0644'
+
+- name: Ensure kubelet.service.d directory exists
+  ansible.builtin.file:
+    path: /etc/systemd/system/kubelet.service.d
+    state: directory
+    mode: '0755'
+
+- name: Deploy kubeadm kubelet drop-in
+  ansible.builtin.template:
+    src: 10-kubeadm.conf.j2
+    dest: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    mode: '0644'
+
+- name: Reload systemd and enable kubelet
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: kubelet
+    enabled: true

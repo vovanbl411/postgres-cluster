@@ -29,7 +29,10 @@ AllowedIPs = {{ peer.tunnel_ip }}/32
 # {{ peer_name }}
 PublicKey = {{ peer_pubkey }}
 AllowedIPs = 10.200.0.0/24
-Endpoint = {{ hostvars[groups['bastion'][0]]['ansible_host'] }}:{{ wg_port }}
+{% set peer_endpoint = peer.endpoint_host | default(hostvars[peer_name]['wg_endpoint_host'] | default(hostvars[peer_name]['ansible_host'] | default(wg_bastion_endpoint | default('')))) %}
+{% if peer_endpoint | length > 0 %}
+Endpoint = {{ peer_endpoint }}:{{ wg_port }}
+{% endif %}
 PersistentKeepalive = 25
 {% endif %}
 {% endif %}

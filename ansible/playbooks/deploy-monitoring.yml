@@ -2,6 +2,13 @@
 - name: Deploy monitoring server
   hosts: monitoring
   become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Ensure base OS configuration
+      ansible.builtin.import_role:
+        name: common
+
   roles:
     - role: monitoring/server
       tags: [monitoring, server]
@@ -9,15 +16,20 @@
 - name: Deploy monitoring agents to K8s nodes
   hosts: controllers:workers
   become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Ensure base OS configuration
+      ansible.builtin.import_role:
+        name: common
+
   roles:
     - role: monitoring/node_exporter
       tags: [monitoring, node_exporter]
       when: node_exporter_enabled | default(true)
-
     - role: monitoring/vmagent
       tags: [monitoring, vmagent]
       when: vmagent_enabled | default(true)
-
     - role: monitoring/wireguard_exporter
       tags: [monitoring, wireguard_exporter]
       when: wireguard_exporter_enabled | default(false)
@@ -25,15 +37,20 @@
 - name: Deploy monitoring agents to bastion
   hosts: bastion
   become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Ensure base OS configuration
+      ansible.builtin.import_role:
+        name: common
+
   roles:
     - role: monitoring/node_exporter
       tags: [monitoring, node_exporter]
       when: node_exporter_enabled | default(true)
-
     - role: monitoring/vmagent
       tags: [monitoring, vmagent]
       when: vmagent_enabled | default(true)
-
     - role: monitoring/wireguard_exporter
       tags: [monitoring, wireguard_exporter]
       when: wireguard_exporter_enabled | default(true)
@@ -41,15 +58,20 @@
 - name: Deploy monitoring agents to postgres nodes
   hosts: postgres_nodes
   become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Ensure base OS configuration
+      ansible.builtin.import_role:
+        name: common
+
   roles:
     - role: monitoring/node_exporter
       tags: [monitoring, node_exporter]
       when: node_exporter_enabled | default(true)
-
     - role: monitoring/vmagent
       tags: [monitoring, vmagent]
       when: vmagent_enabled | default(true)
-
     - role: monitoring/postgres_exporter
       tags: [monitoring, postgres_exporter]
       when: postgres_exporter_enabled | default(false)

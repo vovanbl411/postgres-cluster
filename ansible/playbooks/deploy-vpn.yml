@@ -2,6 +2,13 @@
 - name: Setup bastion NAT
   hosts: bastion
   become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Ensure base OS configuration
+      ansible.builtin.import_role:
+        name: common
+
   roles:
     - role: vpn/bastion_nat
       tags: [vpn, nat]
@@ -9,6 +16,13 @@
 - name: Setup routes for all VPC nodes
   hosts: all
   become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Ensure base OS configuration
+      ansible.builtin.import_role:
+        name: common
+
   roles:
     - role: vpn/routes
       tags: [vpn, routes]
@@ -17,6 +31,13 @@
 - name: Setup WireGuard
   hosts: all
   become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Ensure base OS configuration
+      ansible.builtin.import_role:
+        name: common
+
   roles:
     - role: vpn/wireguard
       tags: [vpn, wireguard]

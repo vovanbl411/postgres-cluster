@@ -1,12 +1,12 @@
 ---
 - name: Update apt cache and upgrade packages
-  apt:
+  ansible.builtin.apt:
     update_cache: yes
     upgrade: dist
     cache_valid_time: 3600
 
 - name: Install essential packages
-  apt:
+  ansible.builtin.apt:
     name:
       - chrony
       - curl
@@ -20,13 +20,13 @@
     state: present
 
 - name: Ensure Chrony is enabled and running
-  systemd:
+  ansible.builtin.systemd:
     name: chrony
     state: started
     enabled: yes
 
 - name: Configure sysctl for HAProxy, Keepalived and PostgreSQL
-  sysctl:
+  ansible.posix.sysctl:
     name: "{{ item.name }}"
     value: "{{ item.value }}"
     sysctl_file: /etc/sysctl.d/99-postgres-ha.conf

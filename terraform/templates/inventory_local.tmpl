@@ -11,6 +11,7 @@ ${name} ansible_host=${config.ip}
 
 [controllers:vars]
 wg_tunnel_ip=10.200.0.2
+vpc_node=true
 
 [workers]
 %{ for name, config in nodes ~}
@@ -18,6 +19,9 @@ wg_tunnel_ip=10.200.0.2
 ${name} ansible_host=${config.ip}
 %{ endif ~}
 %{ endfor ~}
+
+[workers:vars]
+vpc_node=true
 
 [monitoring]
 %{ for name, config in nodes ~}

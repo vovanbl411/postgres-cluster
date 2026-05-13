@@ -35,10 +35,10 @@ postgresql:
   authentication:
     replication:
       username: replicator
-      password: "{{ replication_password }}"
+      password: "{{ patroni_replication_password }}"
     superuser:
       username: postgres
-      password: "{{ superuser_password }}"
+      password: "{{ patroni_superuser_password }}"
   parameters:
     unix_socket_directories: '/var/run/postgresql'
   use_pg_rewind: true
